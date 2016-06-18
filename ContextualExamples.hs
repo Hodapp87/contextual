@@ -23,7 +23,7 @@ spiralTree1 = Node (Xforms [Translate 0 (-0.3) 0]) [spiralRec]
                       [Node (Prim Square) []]
 
 spiral2 = defaultScene { description = "Triangle spiral thingy"
-                       , background = Just black
+                       , background = Nothing
                        , tree = spiralTree2
                        , bottomRight = (1.778, 1)
                        }

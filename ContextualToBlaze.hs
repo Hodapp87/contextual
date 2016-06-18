@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Main where
+module ContextualToBlaze where
 
 import Data.List (intercalate)
 import Data.Monoid
@@ -16,9 +16,6 @@ import qualified Text.Blaze.Svg11.Attributes as A
 import Text.Blaze.Svg.Renderer.String (renderSvg)
 
 import Contextual
-import qualified ContextualExamples
-
-main = putStrLn $ render ContextualExamples.spiral6
 
 render :: Contextual.Scene -> String
 render scene = renderSvg $ preamble $ bg >> treeToSvg (tree scene)
