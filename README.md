@@ -25,10 +25,12 @@ change later when I'm feeling more imaginative.
 ## Wish-list for Contextual
 
 * To actually work right.
-* A more explicit Applicative expression for building up the scene.
+* Current work on free monad representation:
+    * Add other primitives
+    * Get simple exporter for something like SVG
 * Use of Data.Reify to transform recursive structures, perhaps to
   backends that can express recursion natively.
-* Support for [Cairo](https://hackage.haskell.org/package/cairo).
+* Support for [Cairo](https://hackage.haskell.org/package/cairo-0.12.3/docs/Graphics-Rendering-Cairo.html).
 * Integration with [IHaskell](https://github.com/gibiansky/IHaskell)
   and [Jupyter](http://jupyter.org/).  Perhaps I can use the mechanism
   that

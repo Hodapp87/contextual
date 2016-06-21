@@ -55,7 +55,7 @@ data Primitive = Square
 data Instance a = Prim Primitive
                 | Xforms [Transform a]
                 deriving (Show);
-
+  
 -- updateScale scale xforms: Given an input scale ratio and a list of
 -- transforms, return a corrected scale figure (based on accumulating the
 -- Scale transforms present in the list of transforms).

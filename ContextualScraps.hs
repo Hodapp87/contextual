@@ -5,8 +5,8 @@ import Control.Monad.Free
 data CtxtF x = Square x
              | Triangle x
              | Line x
-             | Scale Float (Ctxt x) x
-             | Translate Float Float (Ctxt x) x
+             | Scale Double (Ctxt x) x
+             | Translate Double Double (Ctxt x) x
              deriving (Show);
 
 type Ctxt = Free CtxtF
@@ -27,14 +27,14 @@ triangle = liftF $ Triangle ()
 line :: Ctxt ()
 line = liftF $ Line ()
 
-scale :: Float -> Ctxt () -> Ctxt ()
+scale :: Double -> Ctxt () -> Ctxt ()
 scale n c = liftF $ Scale n c ()
 
-translate :: Float -> Float -> Ctxt () -> Ctxt ()
+translate :: Double -> Double -> Ctxt () -> Ctxt ()
 translate dx dy c = liftF $ Translate dx dy c ()
 
 showCtxt :: (Show a) => Ctxt a -> [String]
-showCtxt (Pure _) = [""]
+showCtxt (Pure _) = []
 showCtxt (Free (Square c)) = "square" : showCtxt c
 showCtxt (Free (Triangle c)) = "triangle" : showCtxt c
 showCtxt (Free (Line c)) = "line" : showCtxt c
@@ -48,10 +48,3 @@ showCtxt (Free t@_) = error $ "Unknown type, " ++ show t
 
 indent :: String -> [String] -> [String]
 indent pfx = map (pfx ++)
-
-test :: Ctxt ()
-test = do
-  square
-  translate 1.0 1.0 $ do
-    square
-  scale 2 $ translate 1.0 2.0 $ triangle
