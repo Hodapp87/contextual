@@ -6,15 +6,17 @@ data CtxtF x = Square x
              | Triangle x
              | Line x
              | Scale Float (Ctxt x) x
+             | Translate Float Float (Ctxt x) x
              deriving (Show);
 
 type Ctxt = Free CtxtF
 
 instance Functor CtxtF where
-  fmap f (Square    x) = Square             (f x)
-  fmap f (Triangle  x) = Triangle           (f x)
-  fmap f (Line      x) = Line               (f x)
-  fmap f (Scale n c x) = Scale n (fmap f c) (f x)
+  fmap f (Square    x)         = Square             (f x)
+  fmap f (Triangle  x)         = Triangle           (f x)
+  fmap f (Line      x)         = Line               (f x)
+  fmap f (Scale n c x)         = Scale n (fmap f c) (f x)
+  fmap f (Translate dx dy c x) = Translate dx dy (fmap f c) (f x)
 
 square :: Ctxt ()
 square = liftF $ Square ()
@@ -28,6 +30,9 @@ line = liftF $ Line ()
 scale :: Float -> Ctxt () -> Ctxt ()
 scale n c = liftF $ Scale n c ()
 
+translate :: Float -> Float -> Ctxt () -> Ctxt ()
+translate dx dy c = liftF $ Translate dx dy c ()
+
 showCtxt :: (Show a) => Ctxt a -> [String]
 showCtxt (Pure _) = [""]
 showCtxt (Free (Square c)) = "square" : showCtxt c
@@ -35,6 +40,9 @@ showCtxt (Free (Triangle c)) = "triangle" : showCtxt c
 showCtxt (Free (Line c)) = "line" : showCtxt c
 showCtxt (Free (Scale n c' c)) =
   ("scale " ++ show n ++ " {") : rest ++ ["}"] ++ showCtxt c
+  where rest = indent "  " $ showCtxt c'
+showCtxt (Free (Translate dx dy c' c)) =
+  ("translate " ++ show dx ++ "," ++ show dy ++ " {") : rest ++ ["}"] ++ showCtxt c
   where rest = indent "  " $ showCtxt c'
 showCtxt (Free t@_) = error $ "Unknown type, " ++ show t
 
@@ -44,5 +52,6 @@ indent pfx = map (pfx ++)
 test :: Ctxt ()
 test = do
   square
-  square
-  scale 2 $ scale 4 $ triangle
+  translate 1.0 1.0 $ do
+    square
+  scale 2 $ translate 1.0 2.0 $ triangle
