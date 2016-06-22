@@ -24,14 +24,14 @@ change later when I'm feeling more imaginative.
 
 ## Wish-list for Contextual
 
-* To actually work right.
 * Support for randomness.
-* Current work on free monad representation:
-    * Add other primitives
-    * Get simple exporter for something like SVG
+* Support for colors.
+* Support for primitives such as circle, triangle, and arc.
+* Support for exporting SVG without needing something as heavy as
+Cairo (perhaps
+[blaze-svg](https://hackage.haskell.org/package/blaze-svg)).
 * Use of Data.Reify to transform recursive structures, perhaps to
   backends that can express recursion natively.
-* Support for [Cairo](https://hackage.haskell.org/package/cairo-0.12.3/docs/Graphics-Rendering-Cairo.html).
 * Integration with [IHaskell](https://github.com/gibiansky/IHaskell)
   and [Jupyter](http://jupyter.org/).  Perhaps I can use the mechanism
   that
@@ -45,5 +45,6 @@ change later when I'm feeling more imaginative.
 * Some magic with [ghcjs](https://github.com/ghcjs/ghcjs) to allow
   this to run in, and render in, the browser.
 * Separate modules for backends (as many other libraries do)
-* Perhaps rewrite using a simpler form of 'Free' that just uses the
+* Perhaps rewriting using a simpler form of 'Free' that just uses the
 parts I need.
+* Support for animation?

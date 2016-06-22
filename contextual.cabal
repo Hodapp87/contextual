@@ -22,7 +22,7 @@ executable contextual
   -- ContextualExamples, ContextualToBlaze
   other-extensions:    OverloadedStrings
   build-depends:       base
-                     , blaze-svg
+                     --, blaze-svg
                      , cairo
                      , colour
                      , containers

@@ -1,3 +1,19 @@
+{-|
+Module      : CairoBackend
+Description : Cairo backend for Contextual
+Copyright   : (c) Chris Hodapp, 2016
+License     : ?
+Maintainer  : Hodapp87@gmail.com
+Stability   : experimental
+Portability : POSIX
+
+This is the backend for rendering a 'Ctxt' grammar to Cairo,
+particularly, the type
+<https://hackage.haskell.org/package/cairo-0.12.3/docs/Graphics-Rendering-Cairo.html
+Graphics.Rendering.Cairo.Render>.
+
+-}
+
 module CairoBackend where
 
 import Contextual
@@ -7,6 +23,9 @@ import Contextual
 import Control.Monad (when)
 import Control.Monad.Free
 import qualified Graphics.Rendering.Cairo as C 
+
+-- For my reference:
+-- https://hackage.haskell.org/package/cairo-0.12.3/docs/Graphics-Rendering-Cairo.html
 
 -- | Render a 'Ctxt' to Cairo, given some minimum scale at which
 -- rendering stops.

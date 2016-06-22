@@ -1,13 +1,27 @@
--- (c) 2013, Chris Hodapp
--- 2013-12-07, this is yet another rewriting of my software for drawing
--- algorithmic images based on a context-free grammar, eventually a
--- nondeterministic one.
--- This was inspired by Context Free: http://www.contextfreeart.org/
--- It was eventually rewritten partially in a few other languages as practice.
--- JavaScript, HTML5, Canvas/SVG:
---    https://github.com/Hodapp87/html5-dabbling/tree/master/contextual
--- Scala: https://github.com/Hodapp87/scala_cf3
--- Clojure: https://github.com/Hodapp87/contextual
+{-|
+Module      : CairoBackend
+Description : Cairo backend for Contextual
+Copyright   : (c) Chris Hodapp, 2016
+License     : ?
+Maintainer  : Hodapp87@gmail.com
+Stability   : experimental
+Portability : POSIX
+
+This is yet another rewriting of my software for drawing
+algorithmic images based on a context-free grammar, eventually a
+nondeterministic one.
+
+This was inspired by <http://www.contextfreeart.org/ Context Free>,
+and a few other tools that I wrote to reimplement Context Free for
+practice, such as
+<https://github.com/Hodapp87/html5-dabbling/tree/master/contextual>
+for an implementation in JavaScript, HTML5, and Canvas/SVG,
+<https://github.com/Hodapp87/scala_cf3 scala_cf5> for a Scala
+implementation, and <https://github.com/Hodapp87/contextual_clojure
+contextual_clojure> for a Clojure one.
+
+-}
+
 
 module Contextual where
 
