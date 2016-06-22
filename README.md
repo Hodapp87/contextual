@@ -43,4 +43,6 @@ change later when I'm feeling more imaginative.
       [ihaskell-diagrams](https://github.com/gibiansky/IHaskell/blob/1b6d9081f2109fd50dcdbaebe9dbad1676a01d78/ihaskell-display/ihaskell-diagrams/IHaskell/Display/Diagrams.hs)
 * Some magic with [ghcjs](https://github.com/ghcjs/ghcjs) to allow
   this to run in, and render in, the browser.
-* Separate modules for backends
+* Separate modules for backends (as many other libraries do)
+* Perhaps rewrite using a simpler form of 'Free' that just uses the
+parts I need.
