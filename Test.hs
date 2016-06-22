@@ -34,11 +34,16 @@ main2 = C.withImageSurface
 
 test :: Ctxt ()
 test = do
-  scale 0.5 $ square
-  translate 0.25 0.25 $ scale 0.25 $ square
-  --translate 10.0 10.0 $ scale 20 $ do
-  --  square
-  --scale 2 $ translate 1.0 2.0 $ square
+  pattern 0.5 0
+  pattern (-0.5) 0
+  pattern 0 0.5
+  pattern 0 (-0.5)
+
+pattern :: Double -> Double -> Ctxt ()
+pattern dx dy = do
+  scale 0.5 $ do
+    square
+    translate dx dy $ pattern dx dy
 
 px = 400
 py = 400
@@ -54,6 +59,6 @@ main = C.withImageSurface
       --C.setSourceRGB 0 0 0 
       --C.rectangle 0 0 px' py'
       --C.fill
-      renderCairo test
+      renderCairo 1e-5 test
       C.restore 
     C.surfaceWriteToPNG surf "Text.png"
