@@ -9,93 +9,58 @@
 -- Scala: https://github.com/Hodapp87/scala_cf3
 -- Clojure: https://github.com/Hodapp87/contextual
 
-module Contextual ( Transform(..)
-                  , Primitive(..)
-                  , Instance(..)
-                  , Scene(..)
-                  , defaultScene
-                  , updateScale
-                  , sRGBA
-                  ) where
+module Contextual where
 
-import Data.Tree
-import Data.Word (Word8)
+import Control.Monad.Free
 
-import Data.Colour
-import qualified Data.Colour.SRGB as SRGB
+data CtxtF x = Square x -- ^ Square of sidelength 1, center (0,0),
+                        -- axis-aligned
+             | Triangle x -- ^ Not implemented!
+             | Line x -- ^ Not implemented!
+             | Scale Double (Ctxt x) x -- ^ Uniform scaling in X & Y
+                                       -- of the surrounded 'Ctxt'
+             | Translate Double Double (Ctxt x) x -- ^ Translation in
+                                                  -- X & Y of the
+                                                  -- surrounded 'ctxt'
+             deriving (Show);
 
-data Transform a = Scale a -- ^ Scale uniformly by the given factor.
-                 | ScaleXYZ a a a -- ^ Scale non-uniformly in X, Y, and Z.
-                 | Translate a a a -- ^ Translate in X, Y, and Z.
-                 | Rotate a -- ^ Rotate about origin
-                 | RotateXYZ a a a -- ^ ...not really implemented
-                 | Shear a a a -- ^ Shearing in X, Y, and Z (unimplemented)
-                 | Fill (AlphaColour Float) -- ^ Specify a fill color
-                 | Stroke (AlphaColour Float) -- ^ Specify a stroke color
-                 | FillBlend Float (AlphaColour Float) -- ^ Blend fill color by given factor
-                 | StrokeBlend Float (AlphaColour Float) -- ^ Blend stroke color by given factor
-                   -- amount
-                 deriving (Show);
+type Ctxt = Free CtxtF
 
--- TODO: Color transforms
--- Perhaps if I parametrize this, it will be easier to extend later to support
--- things like time-varying transformations, and relatively simple to call it
--- now just using some numerical type for 'a'.
+instance Functor CtxtF where
+  fmap f (Square    x)         = Square             (f x)
+  fmap f (Triangle  x)         = Triangle           (f x)
+  fmap f (Line      x)         = Line               (f x)
+  fmap f (Scale n c x)         = Scale n (fmap f c) (f x)
+  fmap f (Translate dx dy c x) = Translate dx dy (fmap f c) (f x)
 
-data Primitive = Square
-               | Triangle
-               | Line
-               | None
-               deriving (Show);
+square :: Ctxt ()
+square = liftF $ Square ()
 
--- TODO: Add more primitives (arc?)
--- Make line have a thickness? (or just let scaling handle this)
+triangle :: Ctxt ()
+triangle = liftF $ Triangle ()
 
--- | An 'Instance' is either a 'Primitive', or a list of 'Transform'.
-data Instance a = Prim Primitive
-                | Xforms [Transform a]
-                deriving (Show);
-  
--- updateScale scale xforms: Given an input scale ratio and a list of
--- transforms, return a corrected scale figure (based on accumulating the
--- Scale transforms present in the list of transforms).
-updateScale :: Num a => a -> [Transform a] -> a
-updateScale s [] = s
-updateScale s (xf:xfs) = case xf of Scale s' -> updateScale (s * s') xfs
-                                    _        -> updateScale s xfs
+line :: Ctxt ()
+line = liftF $ Line ()
 
--- | 'Scene' gives the definition of the scene. This consists of some metadata,
--- scene-wide settings, and the tree of nodes giving the automata.
-data Scene = Scene {
-  -- | The tree expressing the actual content of the scene
-  -- TODO: Don't tie this to Float!
-  tree :: Tree (Instance Float),
-  -- | Human-readable scene description
-  description :: String,
-  -- | Background color, or Nothing if no background.
-  background :: Maybe (Colour Float),
-  -- | Desired top-left coordinate of viewport as (x,y). Default is (0,0).
-  topLeft :: (Float, Float),
-  -- | Desired bottom-right coordinate of viewport as (x,y). Default is (1,1).
-  bottomRight :: (Float, Float)
-  } deriving (Show);
+scale :: Double -> Ctxt () -> Ctxt ()
+scale n c = liftF $ Scale n c ()
 
-defaultScene = Scene { tree = Node (Prim None) []
-                     , description = "Default Scene"
-                     , background = Nothing
-                     , topLeft = (0, 0)
-                     , bottomRight = (1, 1)
-                     }
+translate :: Double -> Double -> Ctxt () -> Ctxt ()
+translate dx dy c = liftF $ Translate dx dy c ()
 
--- | 'sRGBA' is a convenience function to generate an 'AlphaColour' in much the
--- same way that 'Data.Colour.SRGB.sRGB' generates a 'Colour'.
-sRGBA :: (Ord b, Floating b) => b -> b -> b -> b -> AlphaColour b
-sRGBA r g b a = withOpacity (SRGB.sRGB r g b) a
+-- | Pretty-print a 'Ctxt'
+showCtxt :: (Show a) => Ctxt a -> [String]
+showCtxt (Pure _) = []
+showCtxt (Free (Square c)) = "square" : showCtxt c
+showCtxt (Free (Triangle c)) = "triangle" : showCtxt c
+showCtxt (Free (Line c)) = "line" : showCtxt c
+showCtxt (Free (Scale n c' c)) =
+  ("scale " ++ show n ++ " {") : rest ++ ["}"] ++ showCtxt c
+  where rest = indent "  " $ showCtxt c'
+showCtxt (Free (Translate dx dy c' c)) =
+  ("translate " ++ show dx ++ "," ++ show dy ++ " {") : rest ++ ["}"] ++ showCtxt c
+  where rest = indent "  " $ showCtxt c'
+showCtxt (Free t@_) = error $ "Unknown type, " ++ show t
 
--- Thoughts:
--- Does Haskell give me any way to process an infinite tree in such a way that
--- the processing occurs only once, and produces another infinite tree? The
--- only way offhand I can think of doing this is to start with a finite tree
--- that has references that I somehow 'close' the loop(s) in later.
--- (Later answer: Yes. This in fact a problem that comes up fairly often.
--- See Data.Reify and the paper that explains it.)
+indent :: String -> [String] -> [String]
+indent pfx = map (pfx ++)

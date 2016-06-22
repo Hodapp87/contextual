@@ -1,11 +1,10 @@
 module Main where
 
-import qualified ContextualToBlaze
-import qualified ContextualExamples
+import Contextual
+import CairoBackend
 import qualified Graphics.Rendering.Cairo as C 
 
-main = putStrLn $ ContextualToBlaze.render ContextualExamples.spiral2
-
+{-
 main2 = C.withImageSurface  
   C.FormatARGB32 200 200 $ \surf -> 
   do 
@@ -29,5 +28,32 @@ main2 = C.withImageSurface
       C.lineTo 180 110
       C.closePath
       C.stroke
+      C.restore 
+    C.surfaceWriteToPNG surf "Text.png"
+-}
+
+test :: Ctxt ()
+test = do
+  scale 0.5 $ square
+  translate 0.25 0.25 $ scale 0.25 $ square
+  --translate 10.0 10.0 $ scale 20 $ do
+  --  square
+  --scale 2 $ translate 1.0 2.0 $ square
+
+px = 400
+py = 400
+
+main = C.withImageSurface  
+  C.FormatARGB32 px py $ \surf -> 
+  do 
+    C.renderWith surf $ do
+      -- Open a context (not strictly needed, I don't think, but it
+      -- may help if we ever need to compose anything):
+      C.save
+      preamble px py
+      --C.setSourceRGB 0 0 0 
+      --C.rectangle 0 0 px' py'
+      --C.fill
+      renderCairo test
       C.restore 
     C.surfaceWriteToPNG surf "Text.png"
