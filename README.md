@@ -24,27 +24,28 @@ change later when I'm feeling more imaginative.
 
 ## Wish-list for Contextual
 
-* Support for randomness.
-* Support for colors.
-* Support for primitives such as circle, triangle, and arc.
+* Support for randomness
+* Support for colors
+* Support for other primitives: circle, line, arc
+* Support for separate stroke and fill, and perhaps thickness
 * Support for exporting SVG without needing something as heavy as
 Cairo (perhaps
 [blaze-svg](https://hackage.haskell.org/package/blaze-svg)).
 * Use of Data.Reify to transform recursive structures, perhaps to
-  backends that can express recursion natively.
+  backends that can express recursion natively
 * Integration with [IHaskell](https://github.com/gibiansky/IHaskell)
   and [Jupyter](http://jupyter.org/).  Perhaps I can use the mechanism
   that
   [ihaskell-charts](https://hackage.haskell.org/package/ihaskell-charts)
   uses, which looks like it ties in with
-  [Chart-cairo](https://hackage.haskell.org/package/Chart-cairo).
+  [Chart-cairo](https://hackage.haskell.org/package/Chart-cairo)
     * Starting points on that:
       [Gtk2hs Tutorial](http://www.muitovar.com/gtk2hs/app1.html),
       [Beautiful Code](http://www.renci.org/wp-content/pub/tutorials/BeautifulCode.pdf),
       [ihaskell-diagrams](https://github.com/gibiansky/IHaskell/blob/1b6d9081f2109fd50dcdbaebe9dbad1676a01d78/ihaskell-display/ihaskell-diagrams/IHaskell/Display/Diagrams.hs)
 * Some magic with [ghcjs](https://github.com/ghcjs/ghcjs) to allow
-  this to run in, and render in, the browser.
+  this to run in, and render in, the browser
 * Separate modules for backends (as many other libraries do)
 * Perhaps rewriting using a simpler form of 'Free' that just uses the
-parts I need.
+parts I need
 * Support for animation?

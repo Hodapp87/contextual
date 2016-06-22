@@ -51,7 +51,8 @@ instance Functor CtxtF where
 square :: Ctxt ()
 square = liftF $ Square ()
 
--- | Not implemented!
+-- | Triangle of sidelength 1, center (0,0), one vertex lying along
+-- positive X.
 triangle :: Ctxt ()
 triangle = liftF $ Triangle ()
 

@@ -70,6 +70,16 @@ renderCairo minScale = renderRec 1.0
           C.rectangle (-0.5) (-0.5) 1 1
           C.fill
           renderRec gs c
+        renderRec gs (Free (Triangle c)) = do
+          -- C.setLineWidth 5
+          let c60 = cos (pi/3) / 2
+              s60 = sin (pi/3) / 2
+          C.moveTo 0.5 0.0
+          C.lineTo (-c60) s60
+          C.lineTo (-c60) (-s60)
+          C.closePath
+          C.fill
+          renderRec gs c
         renderRec _ (Free t@_) = error $ "Unsupported type, " ++ show t
         renderRec _ (Pure _) = return ()
 

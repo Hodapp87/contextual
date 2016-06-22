@@ -32,6 +32,10 @@ main2 = C.withImageSurface
     C.surfaceWriteToPNG surf "Text.png"
 -}
 
+testTriangle :: Ctxt ()
+testTriangle = do
+  scale 0.5 triangle
+
 test :: Ctxt ()
 test = do
   let d = 0.7
@@ -62,6 +66,6 @@ main = C.withImageSurface
       --C.setSourceRGB 0 0 0 
       --C.rectangle 0 0 px' py'
       --C.fill
-      renderCairo 1e-6 test
+      renderCairo 1e-6 testTriangle
       C.restore 
     C.surfaceWriteToPNG surf "test.png"
