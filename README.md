@@ -25,6 +25,7 @@ change later when I'm feeling more imaginative.
 ## Wish-list for Contextual
 
 * To actually work right.
+* Support for randomness.
 * Current work on free monad representation:
     * Add other primitives
     * Get simple exporter for something like SVG
