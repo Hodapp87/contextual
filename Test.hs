@@ -46,7 +46,7 @@ pattern :: Double -> Double -> Double -> Ctxt ()
 pattern dx dy angle = do
   scale 0.5 $ do
     square
-    translate dx dy $ rotate angle $ pattern dx dy angle
+    translate dx dy $ rotate angle $ shear 0.0 0.2 $ pattern dx dy angle
 
 px = 600
 py = 600

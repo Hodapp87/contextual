@@ -23,6 +23,7 @@ import Contextual
 import Control.Monad (when)
 import Control.Monad.Free
 import qualified Graphics.Rendering.Cairo as C 
+import qualified Graphics.Rendering.Cairo.Matrix as CM
 
 -- For my reference:
 -- https://hackage.haskell.org/package/cairo-0.12.3/docs/Graphics-Rendering-Cairo.html
@@ -55,6 +56,12 @@ renderCairo minScale = renderRec 1.0
         renderRec gs (Free (Rotate a c' c)) = do
           C.save
           C.rotate a
+          renderRec gs c'
+          C.restore
+          renderRec gs c
+        renderRec gs (Free (Shear sx sy c' c)) = do
+          C.save
+          C.transform $ CM.Matrix 1.0 sx sy 1.0 0.0 0.0
           renderRec gs c'
           C.restore
           renderRec gs c

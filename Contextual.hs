@@ -27,12 +27,13 @@ module Contextual where
 
 import Control.Monad.Free
 
-data CtxtF x = Square x
-             | Triangle x
-             | Line x
-             | Scale Double (Ctxt x) x
+data CtxtF x = Square                           x
+             | Triangle                         x
+             | Line                             x
+             | Scale Double            (Ctxt x) x
              | Translate Double Double (Ctxt x) x
-             | Rotate Double (Ctxt x) x
+             | Rotate Double           (Ctxt x) x
+             | Shear Double Double     (Ctxt x) x
              deriving (Show);
 
 type Ctxt = Free CtxtF
@@ -44,6 +45,7 @@ instance Functor CtxtF where
   fmap f (Scale n c         x) = Scale n (fmap f c)         $ f x
   fmap f (Translate dx dy c x) = Translate dx dy (fmap f c) $ f x
   fmap f (Rotate a c        x) = Rotate a (fmap f c)        $ f x
+  fmap f (Shear sx sy c     x) = Shear sx sy (fmap f c)     $ f x
 
 -- | Square of sidelength 1, center (0,0), axis-aligned
 square :: Ctxt ()
@@ -65,10 +67,15 @@ scale n c = liftF $ Scale n c ()
 translate :: Double -> Double -> Ctxt () -> Ctxt ()
 translate dx dy c = liftF $ Translate dx dy c ()
 
--- | Rotation by the given angle (in radians); positive angles
--- correspond to a rotation from positive X axis to positive Y axis.
+-- | Rotate the 'Ctxt' by the given angle (in radians); positive
+-- angles correspond to a rotation from positive X axis to positive Y
+-- axis.
 rotate :: Double -> Ctxt () -> Ctxt ()
 rotate a c = liftF $ Rotate a c ()
+
+-- | Shear the surrounded 'Ctxt' with the given X and Y coefficients.
+shear :: Double -> Double -> Ctxt () -> Ctxt ()
+shear sx sy c = liftF $ Shear sx sy c ()
 
 -- | Pretty-print a 'Ctxt'
 showCtxt :: (Show a) => Ctxt a -> [String]
@@ -84,6 +91,9 @@ showCtxt (Free (Translate dx dy c' c)) =
   where rest = indent "  " $ showCtxt c'
 showCtxt (Free (Rotate a c' c)) =
   ("rotate " ++ show a ++ " {") : rest ++ ["}"] ++ showCtxt c
+  where rest = indent "  " $ showCtxt c'
+showCtxt (Free (Shear sx sy c' c)) =
+  ("shear " ++ show sx ++ "," ++ show sy ++ " {") : rest ++ ["}"] ++ showCtxt c
   where rest = indent "  " $ showCtxt c'
   -- TODO: Remove some of the boilerplate for all the transformations above
 showCtxt (Free t@_) = error $ "Unknown type, " ++ show t
