@@ -88,13 +88,19 @@ renderCairo minScale = renderRec 1.0
 -- our own and 'flatten' things to not require a stack.
 
 -- | Sets up a new environment for a given image size in pixels.  This
--- sets up the coordinate space to go from (0,0) to (1,1).  Calling
--- 'C.save' beforehand or 'C.restore' after is still up to you.
-preamble :: Int -> Int -> C.Render ()
-preamble px py = do
+-- sets up the coordinate space to go from (0,0) to (1,1).  If 'black'
+-- is True, then the background is filled with black; otherwise, it is
+-- left transparent. Calling 'C.save' beforehand or 'C.restore' after
+-- is still up to you.
+preamble :: Int -> Int -> Bool -> C.Render ()
+preamble px py black = do
   let px' = fromIntegral px
       py' = fromIntegral py
-  C.setOperator C.OperatorOver      
+  C.setOperator C.OperatorOver
+  when black $ do
+    C.setSourceRGB 0 0 0 
+    C.rectangle 0 0 px' py'
+    C.fill
   C.translate (px' / 2) (py' / 2)
   C.scale px' py'
-  C.setSourceRGB 1 1 1
+  C.setSourceRGBA 1 1 1 0.3

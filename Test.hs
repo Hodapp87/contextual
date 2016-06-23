@@ -34,7 +34,35 @@ main2 = C.withImageSurface
 
 testTriangle :: Ctxt ()
 testTriangle = do
-  scale 0.5 triangle
+  scale (1/3) triangle
+
+-- Not exactly Sierpinski, but an incorrect attempt that looks neat still
+notSierpinski :: Ctxt ()
+notSierpinski = do
+  let xform s = translate (5/6) 0 $ scale (1/3) $ rotate pi s
+      pi3 = pi/3
+      rep6 = do triangle
+                xform rep6
+                rotate (1*pi3) $ xform rep6
+                rotate (2*pi3) $ xform rep6
+                rotate (3*pi3) $ xform rep6
+                rotate (4*pi3) $ xform rep6
+                rotate (5*pi3) $ xform rep6
+  scale 0.5 rep6
+
+-- Not exactly Sierpinski, but an attempt at it
+sierpinski :: Ctxt ()
+sierpinski = do
+  let xform s = translate (1/3) 0 $ scale (1/3) $ rotate pi s
+      pi3 = pi/3
+      rep6 = do triangle
+                xform rep6
+                rotate (1*pi3) $ xform rep6
+                rotate (2*pi3) $ xform rep6
+                rotate (3*pi3) $ xform rep6
+                rotate (4*pi3) $ xform rep6
+                rotate (5*pi3) $ xform rep6
+  rep6
 
 test :: Ctxt ()
 test = do
@@ -52,8 +80,8 @@ pattern dx dy angle = do
     square
     translate dx dy $ rotate angle $ shear 0.0 0.2 $ pattern dx dy angle
 
-px = 600
-py = 600
+px = 4000
+py = 4000
 
 main = C.withImageSurface  
   C.FormatARGB32 px py $ \surf -> 
@@ -62,10 +90,7 @@ main = C.withImageSurface
       -- Open a context (not strictly needed, I don't think, but it
       -- may help if we ever need to compose anything):
       C.save
-      preamble px py
-      --C.setSourceRGB 0 0 0 
-      --C.rectangle 0 0 px' py'
-      --C.fill
-      renderCairo 1e-6 testTriangle
+      preamble px py True
+      renderCairo 0.5e-3 sierpinski
       C.restore 
-    C.surfaceWriteToPNG surf "test.png"
+    C.surfaceWriteToPNG surf "sierpinski.png"
