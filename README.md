@@ -49,3 +49,14 @@ Cairo (perhaps
 * Perhaps rewriting using a simpler form of 'Free' that just uses the
 parts I need
 * Support for animation?
+* Some optimization for the use of Cairo, e.g. if we are rendering a
+big scene to a raster image, then doing it in layers of N primitives
+may make sense to avoid building up huge scene graphs.
+* Write some things more concisely.  For instance,
+`CairoBackend.renderCairo` probably should be replaced with `State`
+since it's clear that I'm passing state around explicitly right now,
+and this state will only grow further when I start allowing randomness
+or if I start targeting backends that are more immediate-mode.  I
+might also be making use of
+[Comonad](http://www.haskellforall.com/2013/02/you-could-have-invented-comonads.html)
+implicitly.

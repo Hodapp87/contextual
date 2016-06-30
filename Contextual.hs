@@ -27,14 +27,15 @@ module Contextual where
 
 import Control.Monad.Free
 
-data CtxtF x = Square                           x
-             | Triangle                         x
-             | Line                             x
-             | Scale Double            (Ctxt x) x
+data CtxtF x = Square x
+             | Triangle x
+             | Line x
+             | Scale Double (Ctxt x) x
              | Translate Double Double (Ctxt x) x
-             | Rotate Double           (Ctxt x) x
-             | Shear Double Double     (Ctxt x) x
+             | Rotate Double (Ctxt x) x
+             | Shear Double Double (Ctxt x) x
              | ColorShift Double Double Double Double (Ctxt x) x
+             | Random Double (Ctxt x) (Ctxt x) x
              deriving (Show);
 
 type Ctxt = Free CtxtF
@@ -48,6 +49,7 @@ instance Functor CtxtF where
   fmap f (Rotate a c x) = Rotate a (fmap f c) $ f x
   fmap f (Shear sx sy c x) = Shear sx sy (fmap f c) $ f x
   fmap f (ColorShift r g b a c x) = ColorShift r g b a (fmap f c) $ f x
+  fmap f (Random p c1 c2 x) = Random p (fmap f c1) (fmap f c2) $ f x
 
 -- | Square of sidelength 1, center (0,0), axis-aligned
 square :: Ctxt ()
@@ -86,6 +88,12 @@ shear sx sy c = liftF $ Shear sx sy c ()
 colorshift :: Double -> Double -> Double -> Double -> Ctxt () -> Ctxt ()
 colorshift r g b a c = liftF $ ColorShift r g b a c ()
 
+-- | Randomly select a child context.  The first argument 'p' gives
+-- the probability that the first child is selected, and the second is
+-- selected with probability '(1-p)'.
+random :: Double -> Ctxt () -> Ctxt () -> Ctxt ()
+random p c1 c2 = liftF $ Random p c1 c2 ()
+
 -- | Pretty-print a 'Ctxt'
 showCtxt :: (Show a) => Ctxt a -> [String]
 showCtxt (Pure _) = []
@@ -104,7 +112,15 @@ showCtxt (Free (Rotate a c' c)) =
 showCtxt (Free (Shear sx sy c' c)) =
   ("shear " ++ show sx ++ "," ++ show sy ++ " {") : rest ++ ["}"] ++ showCtxt c
   where rest = indent "  " $ showCtxt c'
+showCtxt (Free (ColorShift r g b a c' c)) =
+  ("colorshift " ++ show r ++ "," ++ show g ++ "," ++ show b ++
+   "," ++ show a ++ " {") : rest ++ ["}"] ++ showCtxt c
+  where rest = indent "  " $ showCtxt c'
   -- TODO: Remove some of the boilerplate for all the transformations above
+showCtxt (Free (Random p c1 c2 c)) =
+  ("random p=" ++ show p ++ " {") : (indent "  " $ showCtxt c1) ++
+  ("}, p=" ++ show (1-p) ++ " {") : (indent "  " $ showCtxt c2) ++ ["}"] ++
+  showCtxt c
 showCtxt (Free t@_) = error $ "Unknown type, " ++ show t
 
 indent :: String -> [String] -> [String]
