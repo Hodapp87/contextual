@@ -91,6 +91,6 @@ main = C.withImageSurface
       -- may help if we ever need to compose anything):
       C.save
       preamble px py True
-      renderCairo 0.5e-3 sierpinski
+      renderCairo 0.5e-3 (ColorRGBA 1.0 1.0 1.0 0.3) sierpinski
       C.restore 
     C.surfaceWriteToPNG surf "sierpinski.png"

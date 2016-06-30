@@ -34,18 +34,20 @@ data CtxtF x = Square                           x
              | Translate Double Double (Ctxt x) x
              | Rotate Double           (Ctxt x) x
              | Shear Double Double     (Ctxt x) x
+             | ColorShift Double Double Double Double (Ctxt x) x
              deriving (Show);
 
 type Ctxt = Free CtxtF
 
 instance Functor CtxtF where
-  fmap f (Square            x) = Square                     $ f x
-  fmap f (Triangle          x) = Triangle                   $ f x
-  fmap f (Line              x) = Line                       $ f x
-  fmap f (Scale n c         x) = Scale n (fmap f c)         $ f x
+  fmap f (Square x) = Square $ f x
+  fmap f (Triangle x) = Triangle $ f x
+  fmap f (Line x) = Line $ f x
+  fmap f (Scale n c x) = Scale n (fmap f c) $ f x
   fmap f (Translate dx dy c x) = Translate dx dy (fmap f c) $ f x
-  fmap f (Rotate a c        x) = Rotate a (fmap f c)        $ f x
-  fmap f (Shear sx sy c     x) = Shear sx sy (fmap f c)     $ f x
+  fmap f (Rotate a c x) = Rotate a (fmap f c) $ f x
+  fmap f (Shear sx sy c x) = Shear sx sy (fmap f c) $ f x
+  fmap f (ColorShift r g b a c x) = ColorShift r g b a (fmap f c) $ f x
 
 -- | Square of sidelength 1, center (0,0), axis-aligned
 square :: Ctxt ()
@@ -77,6 +79,12 @@ rotate a c = liftF $ Rotate a c ()
 -- | Shear the surrounded 'Ctxt' with the given X and Y coefficients.
 shear :: Double -> Double -> Ctxt () -> Ctxt ()
 shear sx sy c = liftF $ Shear sx sy c ()
+
+-- | Shift the color by the given factors - which apply to red, green,
+-- blue, and alpha, respectively.  A value of 1.0 leaves that channel
+-- unchanged.
+colorshift :: Double -> Double -> Double -> Double -> Ctxt () -> Ctxt ()
+colorshift r g b a c = liftF $ ColorShift r g b a c ()
 
 -- | Pretty-print a 'Ctxt'
 showCtxt :: (Show a) => Ctxt a -> [String]
