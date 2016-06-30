@@ -57,9 +57,11 @@ renderCairo' minScale node = do
                   xform
         -- Recurse (assuming our own context is correct):
         renderCairo' minScale sub
-        -- Restore our context and the Cairo context:
+        -- Restore the Cairo context:
         lift $ C.restore
-        put ctxt
+        -- Restore our context, but pass forward the RNG:
+        g <- rand <$> get
+        put $ ctxt { rand = g }
   case node of
     -- N.B. Only proceed if global scale is large enough
     (Free (Scale n c' c)) -> when (scale ctxt > minScale) $ do
@@ -100,85 +102,23 @@ renderCairo' minScale node = do
       put $ ctxt { fill = rgba' }
       xformAndRestore c' $ setSourceRGBA' rgba'
       renderCairo' minScale c
+    (Free (Random p c1 c2 c)) -> do
+      -- Get a random sample in [0,1]:
+      let g = rand ctxt
+          (sample, g') = R.random g
+      put $ ctxt { rand = g' }
+      renderCairo' minScale (if sample < p then c1 else c2)
+      renderCairo' minScale c
     (Free _) -> error $ "Unsupported type in renderCairo"
     (Pure _) -> return ()
 
-renderCairo :: Double -> ColorRGBA -> Node a -> C.Render ()
-renderCairo minScale color node = do
-  let startCtxt = Context { scale = 1.0, fill = color, rand = R.mkStdGen 12355 }
+renderCairo :: R.RandomGen r => r -> Double -> ColorRGBA -> Node a -> C.Render ()
+renderCairo rg minScale color node = do
+  let startCtxt = Context { scale = 1.0, fill = color, rand = rg }
   setSourceRGBA' color
   execStateT (renderCairo' minScale node) startCtxt
   return ()
   -- TODO: Fix the types around here as they need not all be ()
-
-{-
--- | Render a 'Node' to Cairo, given some minimum scale at which
--- rendering stops and a starting color.
-renderCairo :: Show a => Double -> ColorRGBA -> Node a -> C.Render ()
-renderCairo minScale color ctxt = setSourceRGBA' color >>
-                                  renderRec 1.0 color ctxt
-  where renderRec :: Show a => Double -> ColorRGBA -> Node a -> C.Render ()
-        -- Below are all transformations.  Note that we always use
-        -- 'C.save' beforehand, and 'C.restore' after.
-        renderRec gs rgba (Free (Scale n c' c)) = do
-          -- This is a little rudimentary, but it should work.  Only
-          -- proceed into nested items when global scale is larger
-          -- than 'minScale':
-          when (gs > minScale) $ do
-            C.save
-            C.scale n n
-            renderRec (n * gs) rgba c'
-            C.restore
-          renderRec gs rgba c
-        renderRec gs rgba (Free (Translate dx dy c' c)) = do
-          -- The pattern below is the same for every transformation so
-          -- far, and could probably be factored out:
-          C.save
-          C.translate dx dy
-          renderRec gs rgba c'
-          C.restore
-          renderRec gs rgba c
-        renderRec gs rgba (Free (Rotate a c' c)) = do
-          C.save
-          C.rotate a
-          renderRec gs rgba c'
-          C.restore
-          renderRec gs rgba c
-        renderRec gs rgba (Free (Shear sx sy c' c)) = do
-          C.save
-          C.transform $ CM.Matrix 1.0 sx sy 1.0 0.0 0.0
-          renderRec gs rgba c'
-          C.restore
-          renderRec gs rgba c
-        -- Below are primitives:
-        renderRec gs rgba (Free (Square c)) = do
-          C.rectangle (-0.5) (-0.5) 1 1
-          C.fill
-          renderRec gs rgba c
-        renderRec gs rgba (Free (Triangle c)) = do
-          -- C.setLineWidth 5
-          let c60 = cos (pi/3) / 2
-              s60 = sin (pi/3) / 2
-          C.moveTo 0.5 0.0
-          C.lineTo (-c60) s60
-          C.lineTo (-c60) (-s60)
-          C.closePath
-          C.fill
-          renderRec gs rgba c
-        renderRec gs rgba (Free (ColorShift r g b a c' c)) = do
-          C.save
-          let rgba' = ColorRGBA { colorR = colorR rgba * r
-                                , colorG = colorG rgba * g
-                                , colorB = colorB rgba * b
-                                , colorA = colorA rgba * a
-                                }
-          setSourceRGBA' rgba'
-          renderRec gs rgba' c'
-          C.restore
-          renderRec gs rgba c
-        renderRec _ _ (Free t@_) = error $ "Unsupported type, " ++ show t
-        renderRec _ _ (Pure _) = return ()
--}
 
 -- The above method probably makes more excessive use of save/restore
 -- than is strictly necessary.  We could compose transformations on

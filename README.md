@@ -52,11 +52,11 @@ parts I need
 * Some optimization for the use of Cairo, e.g. if we are rendering a
 big scene to a raster image, then doing it in layers of N primitives
 may make sense to avoid building up huge scene graphs.
-* Write some things more concisely.  For instance,
-`CairoBackend.renderCairo` probably should be replaced with `State`
-since it's clear that I'm passing state around explicitly right now,
-and this state will only grow further when I start allowing randomness
-or if I start targeting backends that are more immediate-mode.  I
-might also be making use of
+* Some diagnostic information in `Context` such as the number of
+primitives or average depth.
+* Perhaps factor out `Context` since much of it will be repeated in
+other backends, particularly anything that does a more immediate-mode
+drawing and lacks the `save`/`restore` of Cairo.
+* Am I using
 [Comonad](http://www.haskellforall.com/2013/02/you-could-have-invented-comonads.html)
-implicitly.
+implicitly?  Should I be using it explicitly?

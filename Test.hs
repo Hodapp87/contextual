@@ -4,6 +4,8 @@ import Contextual
 import CairoBackend
 import qualified Graphics.Rendering.Cairo as C 
 
+import qualified System.Random as R
+
 {-
 main2 = C.withImageSurface  
   C.FormatARGB32 200 200 $ \surf -> 
@@ -64,6 +66,17 @@ sierpinski = do
                 rotate (5*pi3) $ xform rep6
   colorshift 0.8 1.4 3.0 1.3 $ rep6
 
+testRandom :: Node ()
+testRandom = do
+  square
+  colorshift 0.8 1.4 2.0 1.0 $ do
+    random 0.25
+      (translate (1/2)  0 $ scale 0.75 $ rotate (pi/3) testRandom)
+      (translate 0 (-1/2) $ scale 0.75 $ rotate (-pi/3) testRandom)
+    random 0.1
+      (translate (-1/2) 0 $ scale 0.5 $ testRandom)
+      (return ())
+
 test :: Node ()
 test = do
   let d = 0.7
@@ -84,20 +97,33 @@ px = 4000
 py = 4000
 
 main = do
-  let rendered :: C.Render ()
-      rendered = do
+  let sierpR :: C.Render ()
+      sierpR = do
+        -- TODO: Fix below (don't actually need random generator for
+        -- deterministic grammars):
+        let rg = R.mkStdGen 12345
         -- Open a context (not strictly needed, I don't think, but it
         -- may help if we ever need to compose anything):
         C.save
         preamble px py True
-        renderCairo 0.5e-3 (ColorRGBA 1.0 0.3 0.3 0.2) sierpinski
-        C.restore         
+        renderCairo rg 0.5e-3 (ColorRGBA 1.0 0.3 0.3 0.2) sierpinski
+        --renderCairo 0.5e-3 (ColorRGBA 1.0 0.3 0.3 0.2) $ scale 0.5 $ testRandom
+        C.restore
+      randR :: Int -> C.Render ()
+      randR seed = do
+        let rg = R.mkStdGen seed
+        C.save
+        preamble px py True
+        renderCairo rg 1e-5 (ColorRGBA 1.0 0.3 0.3 0.2) $ scale 0.5 $ testRandom
+        C.restore
   C.withImageSurface  
     C.FormatARGB32 px py $ \surf -> 
-    do 
-      C.renderWith surf rendered
-      C.surfaceWriteToPNG surf "sierpinski.png"
+    do
+      let seed = 12347
+      C.renderWith surf $ randR seed
+      C.surfaceWriteToPNG surf ("testRandom" ++ show seed ++ ".png")
+  {-
   C.withSVGSurface "sierpinski.svg"
     (fromIntegral px) (fromIntegral py) $ \surf ->
     do
-      C.renderWith surf rendered
+      C.renderWith surf rendered-}
