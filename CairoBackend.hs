@@ -7,7 +7,7 @@ Maintainer  : Hodapp87@gmail.com
 Stability   : experimental
 Portability : POSIX
 
-This is the backend for rendering a 'Ctxt' grammar to Cairo,
+This is the backend for rendering a 'Node' grammar to Cairo,
 particularly, the type
 <https://hackage.haskell.org/package/cairo-0.12.3/docs/Graphics-Rendering-Cairo.html
 Graphics.Rendering.Cairo.Render>.
@@ -22,6 +22,7 @@ import Contextual
 
 import Control.Monad (when)
 import Control.Monad.Free
+import Control.Monad.State
 import qualified Graphics.Rendering.Cairo as C 
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
@@ -38,12 +39,17 @@ data ColorRGBA = ColorRGBA { colorR :: Double
 setSourceRGBA' :: ColorRGBA -> C.Render ()
 setSourceRGBA' c = C.setSourceRGBA (colorR c) (colorG c) (colorB c) (colorA c)
 
--- | Render a 'Ctxt' to Cairo, given some minimum scale at which
+
+
+renderCairo' :: StateT [Int] C.Render ()
+renderCairo' = undefined
+
+-- | Render a 'Node' to Cairo, given some minimum scale at which
 -- rendering stops and a starting color.
-renderCairo :: Show a => Double -> ColorRGBA -> Ctxt a -> C.Render ()
+renderCairo :: Show a => Double -> ColorRGBA -> Node a -> C.Render ()
 renderCairo minScale color ctxt = setSourceRGBA' color >>
                                   renderRec 1.0 color ctxt
-  where renderRec :: Show a => Double -> ColorRGBA -> Ctxt a -> C.Render ()
+  where renderRec :: Show a => Double -> ColorRGBA -> Node a -> C.Render ()
         -- Below are all transformations.  Note that we always use
         -- 'C.save' beforehand, and 'C.restore' after.
         renderRec gs rgba (Free (Scale n c' c)) = do

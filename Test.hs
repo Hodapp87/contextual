@@ -32,12 +32,12 @@ main2 = C.withImageSurface
     C.surfaceWriteToPNG surf "Text.png"
 -}
 
-testTriangle :: Ctxt ()
+testTriangle :: Node ()
 testTriangle = do
   scale (1/3) triangle
 
 -- Not exactly Sierpinski, but an incorrect attempt that looks neat still
-notSierpinski :: Ctxt ()
+notSierpinski :: Node ()
 notSierpinski = do
   let xform s = translate (5/6) 0 $ scale (1/3) $ rotate pi s
       pi3 = pi/3
@@ -51,7 +51,7 @@ notSierpinski = do
   scale 0.5 rep6
 
 -- Not exactly Sierpinski, but an attempt at it
-sierpinski :: Ctxt ()
+sierpinski :: Node ()
 sierpinski = do
   let xform s = translate (1/3) 0 $ scale (1/3) $ rotate pi s
       pi3 = pi/3
@@ -64,7 +64,7 @@ sierpinski = do
                 rotate (5*pi3) $ xform rep6
   colorshift 0.8 1.4 3.0 1.3 $ rep6
 
-test :: Ctxt ()
+test :: Node ()
 test = do
   let d = 0.7
       angle = 0.4
@@ -74,7 +74,7 @@ test = do
     pattern   0    d  angle
     pattern   0  (-d) angle
 
-pattern :: Double -> Double -> Double -> Ctxt ()
+pattern :: Double -> Double -> Double -> Node ()
 pattern dx dy angle = do
   scale 0.5 $ do
     square

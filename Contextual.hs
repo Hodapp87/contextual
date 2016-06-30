@@ -27,20 +27,20 @@ module Contextual where
 
 import Control.Monad.Free
 
-data CtxtF x = Square x
+data NodeF x = Square x
              | Triangle x
              | Line x
-             | Scale Double (Ctxt x) x
-             | Translate Double Double (Ctxt x) x
-             | Rotate Double (Ctxt x) x
-             | Shear Double Double (Ctxt x) x
-             | ColorShift Double Double Double Double (Ctxt x) x
-             | Random Double (Ctxt x) (Ctxt x) x
+             | Scale Double (Node x) x
+             | Translate Double Double (Node x) x
+             | Rotate Double (Node x) x
+             | Shear Double Double (Node x) x
+             | ColorShift Double Double Double Double (Node x) x
+             | Random Double (Node x) (Node x) x
              deriving (Show);
 
-type Ctxt = Free CtxtF
+type Node = Free NodeF
 
-instance Functor CtxtF where
+instance Functor NodeF where
   fmap f (Square x) = Square $ f x
   fmap f (Triangle x) = Triangle $ f x
   fmap f (Line x) = Line $ f x
@@ -52,76 +52,76 @@ instance Functor CtxtF where
   fmap f (Random p c1 c2 x) = Random p (fmap f c1) (fmap f c2) $ f x
 
 -- | Square of sidelength 1, center (0,0), axis-aligned
-square :: Ctxt ()
+square :: Node ()
 square = liftF $ Square ()
 
 -- | Triangle of sidelength 1, center (0,0), one vertex lying along
 -- positive X.
-triangle :: Ctxt ()
+triangle :: Node ()
 triangle = liftF $ Triangle ()
 
 -- | Not implemented!
-line :: Ctxt ()
+line :: Node ()
 line = liftF $ Line ()
 
--- | Uniform scaling in X & Y of the surrounded 'Ctxt'
-scale :: Double -> Ctxt () -> Ctxt ()
+-- | Uniform scaling in X & Y of the surrounded 'Node'
+scale :: Double -> Node () -> Node ()
 scale n c = liftF $ Scale n c ()
 
--- | Translation in X & Y of the surrounded 'Ctxt'
-translate :: Double -> Double -> Ctxt () -> Ctxt ()
+-- | Translation in X & Y of the surrounded 'Node'
+translate :: Double -> Double -> Node () -> Node ()
 translate dx dy c = liftF $ Translate dx dy c ()
 
--- | Rotate the 'Ctxt' by the given angle (in radians); positive
+-- | Rotate the 'Node' by the given angle (in radians); positive
 -- angles correspond to a rotation from positive X axis to positive Y
 -- axis.
-rotate :: Double -> Ctxt () -> Ctxt ()
+rotate :: Double -> Node () -> Node ()
 rotate a c = liftF $ Rotate a c ()
 
--- | Shear the surrounded 'Ctxt' with the given X and Y coefficients.
-shear :: Double -> Double -> Ctxt () -> Ctxt ()
+-- | Shear the surrounded 'Node' with the given X and Y coefficients.
+shear :: Double -> Double -> Node () -> Node ()
 shear sx sy c = liftF $ Shear sx sy c ()
 
 -- | Shift the color by the given factors - which apply to red, green,
 -- blue, and alpha, respectively.  A value of 1.0 leaves that channel
 -- unchanged.
-colorshift :: Double -> Double -> Double -> Double -> Ctxt () -> Ctxt ()
+colorshift :: Double -> Double -> Double -> Double -> Node () -> Node ()
 colorshift r g b a c = liftF $ ColorShift r g b a c ()
 
 -- | Randomly select a child context.  The first argument 'p' gives
 -- the probability that the first child is selected, and the second is
 -- selected with probability '(1-p)'.
-random :: Double -> Ctxt () -> Ctxt () -> Ctxt ()
+random :: Double -> Node () -> Node () -> Node ()
 random p c1 c2 = liftF $ Random p c1 c2 ()
 
--- | Pretty-print a 'Ctxt'
-showCtxt :: (Show a) => Ctxt a -> [String]
-showCtxt (Pure _) = []
-showCtxt (Free (Square c)) = "square" : showCtxt c
-showCtxt (Free (Triangle c)) = "triangle" : showCtxt c
-showCtxt (Free (Line c)) = "line" : showCtxt c
-showCtxt (Free (Scale n c' c)) =
-  ("scale " ++ show n ++ " {") : rest ++ ["}"] ++ showCtxt c
-  where rest = indent "  " $ showCtxt c'
-showCtxt (Free (Translate dx dy c' c)) =
-  ("translate " ++ show dx ++ "," ++ show dy ++ " {") : rest ++ ["}"] ++ showCtxt c
-  where rest = indent "  " $ showCtxt c'
-showCtxt (Free (Rotate a c' c)) =
-  ("rotate " ++ show a ++ " {") : rest ++ ["}"] ++ showCtxt c
-  where rest = indent "  " $ showCtxt c'
-showCtxt (Free (Shear sx sy c' c)) =
-  ("shear " ++ show sx ++ "," ++ show sy ++ " {") : rest ++ ["}"] ++ showCtxt c
-  where rest = indent "  " $ showCtxt c'
-showCtxt (Free (ColorShift r g b a c' c)) =
+-- | Pretty-print a 'Node'
+showNode :: (Show a) => Node a -> [String]
+showNode (Pure _) = []
+showNode (Free (Square c)) = "square" : showNode c
+showNode (Free (Triangle c)) = "triangle" : showNode c
+showNode (Free (Line c)) = "line" : showNode c
+showNode (Free (Scale n c' c)) =
+  ("scale " ++ show n ++ " {") : rest ++ ["}"] ++ showNode c
+  where rest = indent "  " $ showNode c'
+showNode (Free (Translate dx dy c' c)) =
+  ("translate " ++ show dx ++ "," ++ show dy ++ " {") : rest ++ ["}"] ++ showNode c
+  where rest = indent "  " $ showNode c'
+showNode (Free (Rotate a c' c)) =
+  ("rotate " ++ show a ++ " {") : rest ++ ["}"] ++ showNode c
+  where rest = indent "  " $ showNode c'
+showNode (Free (Shear sx sy c' c)) =
+  ("shear " ++ show sx ++ "," ++ show sy ++ " {") : rest ++ ["}"] ++ showNode c
+  where rest = indent "  " $ showNode c'
+showNode (Free (ColorShift r g b a c' c)) =
   ("colorshift " ++ show r ++ "," ++ show g ++ "," ++ show b ++
-   "," ++ show a ++ " {") : rest ++ ["}"] ++ showCtxt c
-  where rest = indent "  " $ showCtxt c'
+   "," ++ show a ++ " {") : rest ++ ["}"] ++ showNode c
+  where rest = indent "  " $ showNode c'
   -- TODO: Remove some of the boilerplate for all the transformations above
-showCtxt (Free (Random p c1 c2 c)) =
-  ("random p=" ++ show p ++ " {") : (indent "  " $ showCtxt c1) ++
-  ("}, p=" ++ show (1-p) ++ " {") : (indent "  " $ showCtxt c2) ++ ["}"] ++
-  showCtxt c
-showCtxt (Free t@_) = error $ "Unknown type, " ++ show t
+showNode (Free (Random p c1 c2 c)) =
+  ("random p=" ++ show p ++ " {") : (indent "  " $ showNode c1) ++
+  ("}, p=" ++ show (1-p) ++ " {") : (indent "  " $ showNode c2) ++ ["}"] ++
+  showNode c
+showNode (Free t@_) = error $ "Unknown type, " ++ show t
 
 indent :: String -> [String] -> [String]
 indent pfx = map (pfx ++)
