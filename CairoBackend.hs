@@ -14,6 +14,8 @@ Graphics.Rendering.Cairo.Render>.
 
 -}
 
+{-# LANGUAGE FlexibleContexts #-}
+
 module CairoBackend (renderCairo, preamble, ColorRGBA(..)) where
 
 import Contextual hiding (scale)
@@ -26,9 +28,6 @@ import Control.Monad.State
 import qualified System.Random as R
 import qualified Graphics.Rendering.Cairo as C 
 import qualified Graphics.Rendering.Cairo.Matrix as CM
-
--- For my reference:
--- https://hackage.haskell.org/package/cairo-0.12.3/docs/Graphics-Rendering-Cairo.html
 
 data ColorRGBA = ColorRGBA { colorR :: Double
                            , colorG :: Double
@@ -51,52 +50,30 @@ renderCairo' :: R.RandomGen a => Double -- ^ Minimum scale
              -> StateT (Context a) C.Render ()
 renderCairo' minScale node = do
   ctxt <- get
+  let --xformAndRestore :: C.Render () -> Node b -> StateT (Context a) C.Render ()
+      xformAndRestore sub xform = do
+        -- Start Cairo context, apply transformation:
+        lift $ do C.save
+                  xform
+        -- Recurse (assuming our own context is correct):
+        renderCairo' minScale sub
+        -- Restore our context and the Cairo context:
+        lift $ C.restore
+        put ctxt
   case node of
     -- N.B. Only proceed if global scale is large enough
     (Free (Scale n c' c)) -> when (scale ctxt > minScale) $ do
-      -- Start Cairo context, apply transformation...
-      lift $ C.save
-      lift $ C.scale n n
-      -- Recurse, updating our render context...
       put $ ctxt { scale = scale ctxt * n }
-      renderCairo' minScale c'
-      -- Restore our context & Cairo's...
-      lift $ C.restore
-      put $ ctxt
-      -- Render 'next' thing
+      xformAndRestore c' $ C.scale n n
       renderCairo' minScale c
     (Free (Translate dx dy c' c)) -> do
-      -- Start Cairo context, apply transformation...
-      lift $ C.save
-      lift $ C.translate dx dy
-      -- Recurse, no context change needed
-      renderCairo' minScale c'
-      -- Restore our context & Cairo's...
-      lift $ C.restore
-      put $ ctxt
-      -- Render 'next' thing
+      xformAndRestore c' $ C.translate dx dy
       renderCairo' minScale c
     (Free (Rotate a c' c)) -> do
-      -- Start Cairo context, apply transformation...
-      lift $ C.save
-      lift $ C.rotate a
-      -- Recurse, no context change needed
-      renderCairo' minScale c'
-      -- Restore our context & Cairo's...
-      lift $ C.restore
-      put $ ctxt
-      -- Render 'next' thing
+      xformAndRestore c' $ C.rotate a
       renderCairo' minScale c
     (Free (Shear sx sy c' c)) -> do
-      -- Start Cairo context, apply transformation...
-      lift $ C.save
-      lift $ C.transform $ CM.Matrix 1.0 sx sy 1.0 0.0 0.0
-      -- Recurse, no context change needed
-      renderCairo' minScale c'
-      -- Restore our context & Cairo's...
-      lift $ C.restore
-      put $ ctxt
-      -- Render 'next' thing
+      xformAndRestore c' $ C.transform $ CM.Matrix 1.0 sx sy 1.0 0.0 0.0
       renderCairo' minScale c
     (Free (Square c)) -> do
       lift $ C.rectangle (-0.5) (-0.5) 1 1
@@ -114,17 +91,14 @@ renderCairo' minScale node = do
         C.fill
       renderCairo' minScale c
     (Free (ColorShift r g b a c' c)) -> do
-      lift $ C.save
       let rgba = fill ctxt
           rgba' = ColorRGBA { colorR = colorR rgba * r
                             , colorG = colorG rgba * g
                             , colorB = colorB rgba * b
                             , colorA = colorA rgba * a
                             }
-      lift $ setSourceRGBA' rgba'
       put $ ctxt { fill = rgba' }
-      renderCairo' minScale c'
-      put ctxt
+      xformAndRestore c' $ setSourceRGBA' rgba'
       renderCairo' minScale c
     (Free _) -> error $ "Unsupported type in renderCairo"
     (Pure _) -> return ()
@@ -135,6 +109,7 @@ renderCairo minScale color node = do
   setSourceRGBA' color
   execStateT (renderCairo' minScale node) startCtxt
   return ()
+  -- TODO: Fix the types around here as they need not all be ()
 
 {-
 -- | Render a 'Node' to Cairo, given some minimum scale at which
