@@ -14,15 +14,16 @@ Graphics.Rendering.Cairo.Render>.
 
 -}
 
-module CairoBackend where
+module CairoBackend (renderCairo, preamble, ColorRGBA(..)) where
 
-import Contextual
+import Contextual hiding (scale)
 
 --import Debug.Trace
 
 import Control.Monad (when)
 import Control.Monad.Free
 import Control.Monad.State
+import qualified System.Random as R
 import qualified Graphics.Rendering.Cairo as C 
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
@@ -39,11 +40,103 @@ data ColorRGBA = ColorRGBA { colorR :: Double
 setSourceRGBA' :: ColorRGBA -> C.Render ()
 setSourceRGBA' c = C.setSourceRGBA (colorR c) (colorG c) (colorB c) (colorA c)
 
+-- | Rendering context
+data Context a = Context { scale :: Double -- ^ Overall scale
+                         , fill :: ColorRGBA -- ^ Current fill color
+                         , rand :: a -- ^ RandomGen
+                         }
 
+renderCairo' :: R.RandomGen a => Double -- ^ Minimum scale
+             -> Node b -- ^ Starting node
+             -> StateT (Context a) C.Render ()
+renderCairo' minScale node = do
+  ctxt <- get
+  case node of
+    -- N.B. Only proceed if global scale is large enough
+    (Free (Scale n c' c)) -> when (scale ctxt > minScale) $ do
+      -- Start Cairo context, apply transformation...
+      lift $ C.save
+      lift $ C.scale n n
+      -- Recurse, updating our render context...
+      put $ ctxt { scale = scale ctxt * n }
+      renderCairo' minScale c'
+      -- Restore our context & Cairo's...
+      lift $ C.restore
+      put $ ctxt
+      -- Render 'next' thing
+      renderCairo' minScale c
+    (Free (Translate dx dy c' c)) -> do
+      -- Start Cairo context, apply transformation...
+      lift $ C.save
+      lift $ C.translate dx dy
+      -- Recurse, no context change needed
+      renderCairo' minScale c'
+      -- Restore our context & Cairo's...
+      lift $ C.restore
+      put $ ctxt
+      -- Render 'next' thing
+      renderCairo' minScale c
+    (Free (Rotate a c' c)) -> do
+      -- Start Cairo context, apply transformation...
+      lift $ C.save
+      lift $ C.rotate a
+      -- Recurse, no context change needed
+      renderCairo' minScale c'
+      -- Restore our context & Cairo's...
+      lift $ C.restore
+      put $ ctxt
+      -- Render 'next' thing
+      renderCairo' minScale c
+    (Free (Shear sx sy c' c)) -> do
+      -- Start Cairo context, apply transformation...
+      lift $ C.save
+      lift $ C.transform $ CM.Matrix 1.0 sx sy 1.0 0.0 0.0
+      -- Recurse, no context change needed
+      renderCairo' minScale c'
+      -- Restore our context & Cairo's...
+      lift $ C.restore
+      put $ ctxt
+      -- Render 'next' thing
+      renderCairo' minScale c
+    (Free (Square c)) -> do
+      lift $ C.rectangle (-0.5) (-0.5) 1 1
+      lift $ C.fill
+      renderCairo' minScale c
+    (Free (Triangle c)) -> do
+      -- C.setLineWidth 5
+      let c60 = cos (pi/3) / 2
+          s60 = sin (pi/3) / 2
+      lift $ do
+        C.moveTo 0.5 0.0
+        C.lineTo (-c60) s60
+        C.lineTo (-c60) (-s60)
+        C.closePath
+        C.fill
+      renderCairo' minScale c
+    (Free (ColorShift r g b a c' c)) -> do
+      lift $ C.save
+      let rgba = fill ctxt
+          rgba' = ColorRGBA { colorR = colorR rgba * r
+                            , colorG = colorG rgba * g
+                            , colorB = colorB rgba * b
+                            , colorA = colorA rgba * a
+                            }
+      lift $ setSourceRGBA' rgba'
+      put $ ctxt { fill = rgba' }
+      renderCairo' minScale c'
+      put ctxt
+      renderCairo' minScale c
+    (Free _) -> error $ "Unsupported type in renderCairo"
+    (Pure _) -> return ()
 
-renderCairo' :: StateT [Int] C.Render ()
-renderCairo' = undefined
+renderCairo :: Double -> ColorRGBA -> Node a -> C.Render ()
+renderCairo minScale color node = do
+  let startCtxt = Context { scale = 1.0, fill = color, rand = R.mkStdGen 12355 }
+  setSourceRGBA' color
+  execStateT (renderCairo' minScale node) startCtxt
+  return ()
 
+{-
 -- | Render a 'Node' to Cairo, given some minimum scale at which
 -- rendering stops and a starting color.
 renderCairo :: Show a => Double -> ColorRGBA -> Node a -> C.Render ()
@@ -110,6 +203,7 @@ renderCairo minScale color ctxt = setSourceRGBA' color >>
           renderRec gs rgba c
         renderRec _ _ (Free t@_) = error $ "Unsupported type, " ++ show t
         renderRec _ _ (Pure _) = return ()
+-}
 
 -- The above method probably makes more excessive use of save/restore
 -- than is strictly necessary.  We could compose transformations on
