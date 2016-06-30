@@ -62,7 +62,7 @@ sierpinski = do
                 rotate (3*pi3) $ xform rep6
                 rotate (4*pi3) $ xform rep6
                 rotate (5*pi3) $ xform rep6
-  rep6
+  colorshift 0.8 1.4 3.0 1.3 $ rep6
 
 test :: Ctxt ()
 test = do
@@ -91,6 +91,6 @@ main = C.withImageSurface
       -- may help if we ever need to compose anything):
       C.save
       preamble px py True
-      renderCairo 0.5e-3 (ColorRGBA 1.0 1.0 1.0 0.3) sierpinski
+      renderCairo 0.5e-3 (ColorRGBA 1.0 0.3 0.3 0.2) sierpinski
       C.restore 
     C.surfaceWriteToPNG surf "sierpinski.png"

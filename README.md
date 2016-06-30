@@ -25,7 +25,7 @@ change later when I'm feeling more imaginative.
 ## Wish-list for Contextual
 
 * Support for randomness
-* Support for colors
+* Support for colors in HSV
 * Support for other primitives: circle, line, arc
 * Support for separate stroke and fill, and perhaps thickness
 * Support for exporting SVG without needing something as heavy as
