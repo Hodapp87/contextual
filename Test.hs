@@ -83,14 +83,21 @@ pattern dx dy angle = do
 px = 4000
 py = 4000
 
-main = C.withImageSurface  
-  C.FormatARGB32 px py $ \surf -> 
-  do 
-    C.renderWith surf $ do
-      -- Open a context (not strictly needed, I don't think, but it
-      -- may help if we ever need to compose anything):
-      C.save
-      preamble px py True
-      renderCairo 0.5e-3 (ColorRGBA 1.0 0.3 0.3 0.2) sierpinski
-      C.restore 
-    C.surfaceWriteToPNG surf "sierpinski.png"
+main = do
+  let rendered :: C.Render ()
+      rendered = do
+        -- Open a context (not strictly needed, I don't think, but it
+        -- may help if we ever need to compose anything):
+        C.save
+        preamble px py True
+        renderCairo 0.5e-3 (ColorRGBA 1.0 0.3 0.3 0.2) sierpinski
+        C.restore         
+  C.withImageSurface  
+    C.FormatARGB32 px py $ \surf -> 
+    do 
+      C.renderWith surf rendered
+      C.surfaceWriteToPNG surf "sierpinski.png"
+  C.withSVGSurface "sierpinski.svg"
+    (fromIntegral px) (fromIntegral py) $ \surf ->
+    do
+      C.renderWith surf rendered
