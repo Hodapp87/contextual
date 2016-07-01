@@ -39,7 +39,10 @@ or number of primitives)
 * Explicit support for background color and starting color (right now
 I rely on Cairo backend for this).  It's cool to only use black as a
 background color, but it gets sorta boring...
+* A way to specify canvas size.  Right now, non-square images will
+throw off the aspect ratio - squares will be drawn as rectangles.
 * Support for other primitives: circle, line, arc
+* Non-uniform scaling.
 * Support for separate stroke and fill, and perhaps thickness
 * Support for exporting SVG without needing something as heavy as
 Cairo (perhaps
