@@ -36,12 +36,15 @@ These are all generated from `Test.hs`.
 
 ## Wish-list for Contextual
 
-* Ending grammars that don't converge (e.g. limiting recursion depth
-or number of primitives)
+* Travis CI build
 * A way to specify canvas size.  Right now, non-square images will
 throw off the aspect ratio - squares will be drawn as rectangles.
 * Support for other primitives: circle, line, arc
-* Non-uniform scaling.
+* Some diagnostic information in `Context` such as the number of
+primitives or average depth.
+* Stopping rendering on grammars that don't converge (e.g. limiting
+recursion depth or number of primitives)
+* Non-uniform scaling
 * Support for separate stroke and fill, and perhaps thickness
 * Better colorspace than "plain" RGB.
 [colour](https://hackage.haskell.org/package/colour) can probably help
@@ -57,28 +60,27 @@ and [Jupyter](http://jupyter.org/).  Perhaps I can use the mechanism
 that
 [ihaskell-charts](https://hackage.haskell.org/package/ihaskell-charts)
 uses, which looks like it ties in with
-[Chart-cairo](https://hackage.haskell.org/package/Chart-cairo)
-    * Starting points on that:
-      [Gtk2hs Tutorial](http://www.muitovar.com/gtk2hs/app1.html),
-      [Beautiful Code](http://www.renci.org/wp-content/pub/tutorials/BeautifulCode.pdf),
-      [ihaskell-diagrams](https://github.com/gibiansky/IHaskell/blob/1b6d9081f2109fd50dcdbaebe9dbad1676a01d78/ihaskell-display/ihaskell-diagrams/IHaskell/Display/Diagrams.hs)
-* Some magic with [ghcjs](https://github.com/ghcjs/ghcjs) to allow
-this to run in, and render in, the browser
+[Chart-cairo](https://hackage.haskell.org/package/Chart-cairo).  Some
+starting points on that:
+    * [Gtk2hs Tutorial](http://www.muitovar.com/gtk2hs/app1.html),
+    * [Beautiful Code](http://www.renci.org/wp-content/pub/tutorials/BeautifulCode.pdf),
+    * [ihaskell-diagrams](https://github.com/gibiansky/IHaskell/blob/1b6d9081f2109fd50dcdbaebe9dbad1676a01d78/ihaskell-display/ihaskell-diagrams/IHaskell/Display/Diagrams.hs)
+* Some magic with [ghcjs](https://github.com/ghcjs/ghcjs) (looks like
+[stack](http://docs.haskellstack.org/en/stable/ghcjs/) supports it) to
+allow this to run in, and render in, the browser
 ([Canvas](https://github.com/ghcjs/ghcjs-base/tree/master/JavaScript/Web/Canvas)?
 SVG?)
-* Separate modules for backends (as many other libraries do)
-* Perhaps rewriting using a simpler form of 'Free' that just uses the
-parts I need
+* Separate modules for separate backends (as many other libraries do)
+* Perhaps rewriting using a simpler form of
+[Free](https://hackage.haskell.org/package/free/docs/Control-Monad-Free.html)
+that just uses the parts I need
 * Support for animation?
 * Some optimization for the use of Cairo, e.g. if we are rendering a
 big scene to a raster image, then doing it in layers of N primitives
 may make sense to avoid building up huge scene graphs.
-* Some diagnostic information in `Context` such as the number of
-primitives or average depth.
 * Perhaps factor out `Context` since much of it will be repeated in
 other backends, particularly anything that does a more immediate-mode
 drawing and lacks the `save`/`restore` of Cairo.
 * Am I using
 [Comonad](http://www.haskellforall.com/2013/02/you-could-have-invented-comonads.html)
 implicitly?  Should I be using it explicitly?
-* Travis CI build
