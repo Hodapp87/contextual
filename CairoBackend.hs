@@ -20,12 +20,13 @@ module CairoBackend (renderCairo, preamble, ColorRGBA(..)) where
 
 import Contextual hiding (scale)
 
---import Debug.Trace
-
 import Control.Monad (when)
 import Control.Monad.Free
 import Control.Monad.State
 import qualified System.Random as R
+
+import qualified Data.Colour.SRGB as SRGB
+import qualified Data.Colour.RGBSpace.HSL as HSL
 import qualified Graphics.Rendering.Cairo as C 
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
@@ -33,11 +34,22 @@ data ColorRGBA = ColorRGBA { colorR :: Double
                            , colorG :: Double
                            , colorB :: Double
                            , colorA :: Double
-                           }
+                           } deriving Show
 
 -- | Wrapper around 'C.setSourceRGBA' for 'ColorRGBA' arguments
 setSourceRGBA' :: ColorRGBA -> C.Render ()
 setSourceRGBA' c = C.setSourceRGBA (colorR c) (colorG c) (colorB c) (colorA c)
+
+clamp :: (Ord f, Num f) => f -> f
+clamp v = if v < 0 then 0 else if v > 1 then 1 else v
+
+-- | Clamp a 'ColorRGBA' so all colors are within [0,1].
+clampRGBA :: ColorRGBA -> ColorRGBA
+clampRGBA rgba = ColorRGBA { colorR = clamp $ colorR rgba
+                           , colorG = clamp $ colorG rgba
+                           , colorB = clamp $ colorB rgba
+                           , colorA = clamp $ colorA rgba
+                           }
 
 -- | Rendering context
 data Context a = Context { scale :: Double -- ^ Overall scale
@@ -92,12 +104,28 @@ renderCairo' minScale node = do
         C.closePath
         C.fill
       renderCairo' minScale c
-    (Free (ColorShift r g b a c' c)) -> do
+    (Free (ShiftRGBA r g b a c' c)) -> do
       let rgba = fill ctxt
-          rgba' = ColorRGBA { colorR = colorR rgba * r
-                            , colorG = colorG rgba * g
-                            , colorB = colorB rgba * b
-                            , colorA = colorA rgba * a
+          rgba' = clampRGBA $ ColorRGBA { colorR = colorR rgba * r
+                                        , colorG = colorG rgba * g
+                                        , colorB = colorB rgba * b
+                                        , colorA = colorA rgba * a
+                                        }
+      put $ ctxt { fill = rgba' }
+      xformAndRestore c' $ setSourceRGBA' rgba'
+      renderCairo' minScale c
+    (Free (ShiftHSL dh sf lf af c' c)) -> do
+      let rgba = fill ctxt
+          -- Get HSL & transform:
+          (h,s,l) = HSL.hslView $
+            SRGB.RGB (colorR rgba) (colorG rgba) (colorB rgba)
+          (h', s', l') = (h + dh, clamp $ s * sf, clamp $ l * lf)
+          -- Get RGB, and transform alpha separately:
+          rgb' = HSL.hsl h' s' l'
+          rgba' = ColorRGBA { colorR = SRGB.channelRed   rgb'
+                            , colorG = SRGB.channelGreen rgb'
+                            , colorB = SRGB.channelBlue  rgb'
+                            , colorA = clamp $ colorA rgba * af
                             }
       put $ ctxt { fill = rgba' }
       xformAndRestore c' $ setSourceRGBA' rgba'
