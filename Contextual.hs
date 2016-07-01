@@ -33,9 +33,10 @@ data NodeF x = Square x
              | Translate Double Double (Node x) x
              | Rotate Double (Node x) x
              | Shear Double Double (Node x) x
+             | Random Double (Node x) (Node x) x
              | ShiftRGBA Double Double Double Double (Node x) x
              | ShiftHSL Double Double Double Double (Node x) x
-             | Random Double (Node x) (Node x) x
+             | Background Double Double Double Double x
              deriving (Show);
 
 type Node = Free NodeF
@@ -48,9 +49,10 @@ instance Functor NodeF where
   fmap f (Translate dx dy c x) = Translate dx dy (fmap f c) $ f x
   fmap f (Rotate a c x) = Rotate a (fmap f c) $ f x
   fmap f (Shear sx sy c x) = Shear sx sy (fmap f c) $ f x
+  fmap f (Random p c1 c2 x) = Random p (fmap f c1) (fmap f c2) $ f x
   fmap f (ShiftRGBA r g b a c x) = ShiftRGBA r g b a (fmap f c) $ f x
   fmap f (ShiftHSL dh s l a c x) = ShiftHSL dh s l a (fmap f c) $ f x
-  fmap f (Random p c1 c2 x) = Random p (fmap f c1) (fmap f c2) $ f x
+  fmap f (Background r g b a x) = Background r g b a $ f x
 
 -- | Square of sidelength 1, center (0,0), axis-aligned
 square :: Node ()
@@ -83,6 +85,12 @@ rotate a c = liftF $ Rotate a c ()
 shear :: Double -> Double -> Node () -> Node ()
 shear sx sy c = liftF $ Shear sx sy c ()
 
+-- | Randomly select a child context.  The first argument 'p' gives
+-- the probability that the first child is selected, and the second is
+-- selected with probability '(1-p)'.
+random :: Double -> Node () -> Node () -> Node ()
+random p c1 c2 = liftF $ Random p c1 c2 ()
+
 -- | Shift the color by the given factors - which apply to red, green,
 -- blue, and alpha, respectively.  A value of 1 leaves that channel
 -- unchanged.
@@ -105,11 +113,16 @@ shiftHSL :: Double -- ^ Hue delta (degrees)
          -> Node () -> Node ()
 shiftHSL dh s l a c = liftF $ ShiftHSL dh s l a c ()
 
--- | Randomly select a child context.  The first argument 'p' gives
--- the probability that the first child is selected, and the second is
--- selected with probability '(1-p)'.
-random :: Double -> Node () -> Node () -> Node ()
-random p c1 c2 = liftF $ Random p c1 c2 ()
+-- | Set the background color, with all components in range [0-1].
+-- This should preferably be done early (if at all) - calling it later
+-- on or multiple times will give some implementation-dependent
+-- results.
+background :: Double -- ^ Red
+           -> Double -- ^ Green
+           -> Double -- ^ Black
+           -> Double -- ^ Alpha (transparency)
+           -> Node ()
+background r g b a = liftF $ Background r g b a ()
 
 -- | Pretty-print a 'Node'
 showNode :: (Show a) => Node a -> [String]
@@ -141,6 +154,9 @@ showNode (Free (ShiftHSL dh s l a c' c)) =
 showNode (Free (Random p c1 c2 c)) =
   ("random p=" ++ show p ++ " {") : (indent "  " $ showNode c1) ++
   ("}, p=" ++ show (1-p) ++ " {") : (indent "  " $ showNode c2) ++ ["}"] ++
+  showNode c
+showNode (Free (Background r g b a c)) =
+  ("background " ++ show r ++ "," ++ show g ++ "," ++ show b ++ "," ++ show a) :
   showNode c
 showNode (Free t@_) = error $ "Unknown type, " ++ show t
 

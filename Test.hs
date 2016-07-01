@@ -48,8 +48,10 @@ notSierpinski_render px py = do
   -- Open a context (not strictly needed, I don't think, but it
   -- may help if we ever need to compose anything):
   C.save
-  preamble px py True
-  renderCairo rg 0.5e-3 (ColorRGBA 0.4 1.0 0.4 0.8) notSierpinski
+  preamble px py
+  renderCairo rg 0.5e-3 (ColorRGBA 0.4 1.0 0.4 0.8) $ do
+    background 0.0 0.0 0.0 1.0
+    notSierpinski
   C.restore
 
 -- Not exactly Sierpinski, but an attempt at it
@@ -74,8 +76,10 @@ sierpinski_render px py = do
   -- Open a context (not strictly needed, I don't think, but it
   -- may help if we ever need to compose anything):
   C.save
-  preamble px py True
-  renderCairo rg 0.5e-3 (ColorRGBA 1.0 0.3 0.3 0.2) sierpinski
+  preamble px py
+  renderCairo rg 0.5e-3 (ColorRGBA 1.0 0.3 0.3 0.2) $ do
+    background 0.0 0.0 0.0 1.0
+    sierpinski
   C.restore
 
 testRandom :: Node ()
@@ -94,24 +98,44 @@ testRandom_render :: Int -> Int -> Int -> C.Render ()
 testRandom_render px py seed = do
   let rg = R.mkStdGen seed
   C.save
-  preamble px py True
-  renderCairo rg 1e-5 (ColorRGBA 1.0 0.3 0.3 0.2) $ scale 0.5 $ testRandom
+  preamble px py
+  renderCairo rg 1e-5 (ColorRGBA 1.0 0.3 0.3 0.2) $ do
+    background 0.0 0.0 0.0 1.0
+    scale 0.5 $ testRandom
   C.restore  
 
 testHSL :: Node ()
 testHSL = do
   square
-  shiftHSL (-10) 1.1 1.05 1.07 $ rotate (pi/8) $ translate 0.5 (-0.15) $ scale 0.9 $ testHSL
+  shiftHSL (-10) 1.1 1.04 1.07 $ rotate (pi/8) $ translate 0.5 (-0.15) $ scale 0.9 $ testHSL
 
 testHSL_render :: Int -> Int -> C.Render ()
 testHSL_render px py = do
   let rg = R.mkStdGen 12345
   C.save
-  preamble px py True
-  renderCairo rg 1e-5 (ColorRGBA 0.0 0.0 1.0 0.2) $
+  preamble px py
+  renderCairo rg 1e-5 (ColorRGBA 0.1 0.1 1.0 0.3) $ do
+    background 0.0 0.0 0.0 1.0
     translate (-0.25) (-0.25) $
-    scale 0.35 $
-    testHSL
+      scale 0.35 $
+      testHSL
+  C.restore  
+
+testHSL2 :: Node ()
+testHSL2 = do
+  square
+  shiftHSL 6 0.98 0.98 1.07 $ rotate (pi/9) $ translate 0.45 (-0.17) $ scale 0.9 $ testHSL2
+
+testHSL2_render :: Int -> Int -> C.Render ()
+testHSL2_render px py = do
+  let rg = R.mkStdGen 12345
+  C.save
+  preamble px py
+  renderCairo rg 1e-5 (ColorRGBA 1.0 0.0 0.0 0.2) $ do
+    background 0.98 0.98 0.98 1.0
+    translate (-0.25) (-0.25) $
+      scale 0.35 $
+      testHSL2
   C.restore  
 
 test :: Node ()
@@ -141,10 +165,12 @@ main = do
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ testHSL_render px py
     C.surfaceWriteToPNG surf ("testHSL.png")
+  C.withImageSurface C.FormatARGB32 px py $ \surf -> do
+    C.renderWith surf $ testHSL2_render px py
+    C.surfaceWriteToPNG surf ("testHSL2.png")
   C.withSVGSurface "testHSL.svg"
-    (fromIntegral px) (fromIntegral py) $ \surf ->
-    do
-      C.renderWith surf $ testHSL_render px py
+    (fromIntegral px) (fromIntegral py) $
+    \surf -> C.renderWith surf $ testHSL_render px py
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ sierpinski_render px py
     C.surfaceWriteToPNG surf ("sierpinski.png")

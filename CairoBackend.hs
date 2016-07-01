@@ -104,6 +104,13 @@ renderCairo' minScale node = do
         C.closePath
         C.fill
       renderCairo' minScale c
+    (Free (Random p c1 c2 c)) -> do
+      -- Get a random sample in [0,1]:
+      let g = rand ctxt
+          (sample, g') = R.random g
+      put $ ctxt { rand = g' }
+      renderCairo' minScale (if sample < p then c1 else c2)
+      renderCairo' minScale c
     (Free (ShiftRGBA r g b a c' c)) -> do
       let rgba = fill ctxt
           rgba' = clampRGBA $ ColorRGBA { colorR = colorR rgba * r
@@ -130,12 +137,14 @@ renderCairo' minScale node = do
       put $ ctxt { fill = rgba' }
       xformAndRestore c' $ setSourceRGBA' rgba'
       renderCairo' minScale c
-    (Free (Random p c1 c2 c)) -> do
-      -- Get a random sample in [0,1]:
-      let g = rand ctxt
-          (sample, g') = R.random g
-      put $ ctxt { rand = g' }
-      renderCairo' minScale (if sample < p then c1 else c2)
+    (Free (Background r g b a c)) -> do
+      -- save & restore is probably overkill here, but this should
+      -- only be done once.
+      lift $ do
+        C.save
+        C.setSourceRGBA r g b a
+        C.paint
+        C.restore
       renderCairo' minScale c
     (Free _) -> error $ "Unsupported type in renderCairo"
     (Pure _) -> return ()
@@ -153,19 +162,12 @@ renderCairo rg minScale color node = do
 -- our own and 'flatten' things to not require a stack.
 
 -- | Sets up a new environment for a given image size in pixels.  This
--- sets up the coordinate space to go from (0,0) to (1,1).  If 'black'
--- is True, then the background is filled with black; otherwise, it is
--- left transparent. Calling 'C.save' beforehand or 'C.restore' after
--- is still up to you.
-preamble :: Int -> Int -> Bool -> C.Render ()
-preamble px py black = do
+-- sets up the coordinate space to go from (-1,-1) to (1,1).  Calling
+-- 'C.save' beforehand or 'C.restore' after is still up to you.
+preamble :: Int -> Int -> C.Render ()
+preamble px py = do
   let px' = fromIntegral px
       py' = fromIntegral py
   C.setOperator C.OperatorOver
-  when black $ do
-    C.setSourceRGB 0 0 0 
-    C.rectangle 0 0 px' py'
-    C.fill
   C.translate (px' / 2) (py' / 2)
   C.scale px' py'
-  C.setSourceRGBA 1 1 1 0.3

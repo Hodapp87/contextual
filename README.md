@@ -28,6 +28,8 @@ These are all generated from `Test.hs`.
 
 ![HSL spiral](testHSL.png)
 
+![HSL spiral](testHSL2.png)
+
 ![Sierpinski (ish)](sierpinski.png)
 
 ![Not Sierpinski](notSierpinski.png)
@@ -36,31 +38,34 @@ These are all generated from `Test.hs`.
 
 * Ending grammars that don't converge (e.g. limiting recursion depth
 or number of primitives)
-* Explicit support for background color and starting color (right now
-I rely on Cairo backend for this).  It's cool to only use black as a
-background color, but it gets sorta boring...
 * A way to specify canvas size.  Right now, non-square images will
 throw off the aspect ratio - squares will be drawn as rectangles.
 * Support for other primitives: circle, line, arc
 * Non-uniform scaling.
 * Support for separate stroke and fill, and perhaps thickness
+* Better colorspace than "plain" RGB.
+[colour](https://hackage.haskell.org/package/colour) can probably help
+here.  Alongside this: A saner way of specifying colors.
 * Support for exporting SVG without needing something as heavy as
 Cairo (perhaps
 [blaze-svg](https://hackage.haskell.org/package/blaze-svg)).
 * Use of Data.Reify to transform recursive structures, perhaps to
-  backends that can express recursion natively
+backends that can express recursion natively or to a simplified
+expression
 * Integration with [IHaskell](https://github.com/gibiansky/IHaskell)
-  and [Jupyter](http://jupyter.org/).  Perhaps I can use the mechanism
-  that
-  [ihaskell-charts](https://hackage.haskell.org/package/ihaskell-charts)
-  uses, which looks like it ties in with
-  [Chart-cairo](https://hackage.haskell.org/package/Chart-cairo)
+and [Jupyter](http://jupyter.org/).  Perhaps I can use the mechanism
+that
+[ihaskell-charts](https://hackage.haskell.org/package/ihaskell-charts)
+uses, which looks like it ties in with
+[Chart-cairo](https://hackage.haskell.org/package/Chart-cairo)
     * Starting points on that:
       [Gtk2hs Tutorial](http://www.muitovar.com/gtk2hs/app1.html),
       [Beautiful Code](http://www.renci.org/wp-content/pub/tutorials/BeautifulCode.pdf),
       [ihaskell-diagrams](https://github.com/gibiansky/IHaskell/blob/1b6d9081f2109fd50dcdbaebe9dbad1676a01d78/ihaskell-display/ihaskell-diagrams/IHaskell/Display/Diagrams.hs)
 * Some magic with [ghcjs](https://github.com/ghcjs/ghcjs) to allow
-  this to run in, and render in, the browser
+this to run in, and render in, the browser
+([Canvas](https://github.com/ghcjs/ghcjs-base/tree/master/JavaScript/Web/Canvas)?
+SVG?)
 * Separate modules for backends (as many other libraries do)
 * Perhaps rewriting using a simpler form of 'Free' that just uses the
 parts I need
@@ -76,3 +81,4 @@ drawing and lacks the `save`/`restore` of Cairo.
 * Am I using
 [Comonad](http://www.haskellforall.com/2013/02/you-could-have-invented-comonads.html)
 implicitly?  Should I be using it explicitly?
+* Travis CI build
