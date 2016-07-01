@@ -26,7 +26,11 @@ change later when I'm feeling more imaginative.
 
 These are all generated from `Test.hs`.
 
-![HSL spiral](testHSL.png)
+![HSL spiral](testHSL.png){width=100%}
+
+![Sierpinski (ish)](sierpinski.png){width=100%}
+
+![Not Sierpinski](notSierpinski.png){width=100%}
 
 ## Wish-list for Contextual
 
