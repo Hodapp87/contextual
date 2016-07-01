@@ -24,8 +24,10 @@ change later when I'm feeling more imaginative.
 
 ## Wish-list for Contextual
 
-* Support for randomness
-* Support for colors in HSV
+* Ending grammars that don't converge (e.g. limiting recursion depth
+or number of primitives)
+* Explicit support for background color and starting color (right now
+I rely on Cairo backend for this)
 * Support for other primitives: circle, line, arc
 * Support for separate stroke and fill, and perhaps thickness
 * Support for exporting SVG without needing something as heavy as
