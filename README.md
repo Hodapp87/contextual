@@ -22,12 +22,19 @@ the code is probably also atrocious at the moment.
 The name *contextual* is something of a pun on Context Free.  It might
 change later when I'm feeling more imaginative.
 
+## Examples
+
+These are all generated from `Test.hs`.
+
+![HSL spiral](testHSL.png)
+
 ## Wish-list for Contextual
 
 * Ending grammars that don't converge (e.g. limiting recursion depth
 or number of primitives)
 * Explicit support for background color and starting color (right now
-I rely on Cairo backend for this)
+I rely on Cairo backend for this).  It's cool to only use black as a
+background color, but it gets sorta boring...
 * Support for other primitives: circle, line, arc
 * Support for separate stroke and fill, and perhaps thickness
 * Support for exporting SVG without needing something as heavy as
