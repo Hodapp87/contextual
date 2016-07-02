@@ -49,7 +49,7 @@ notSierpinski_render px py = do
   -- may help if we ever need to compose anything):
   C.save
   preamble px py
-  renderCairo rg 0.5e-3 (ColorRGBA 0.4 1.0 0.4 0.8) $ do
+  renderCairo rg 1e-3 (ColorRGBA 0.4 1.0 0.4 0.8) $ do
     background 0.0 0.0 0.0 1.0
     notSierpinski
   C.restore
@@ -77,7 +77,7 @@ sierpinski_render px py = do
   -- may help if we ever need to compose anything):
   C.save
   preamble px py
-  renderCairo rg 0.5e-3 (ColorRGBA 1.0 0.3 0.3 0.2) $ do
+  renderCairo rg 1e-3 (ColorRGBA 1.0 0.3 0.3 0.2) $ do
     background 0.0 0.0 0.0 1.0
     sierpinski
   C.restore
@@ -99,7 +99,7 @@ testRandom_render px py seed = do
   let rg = R.mkStdGen seed
   C.save
   preamble px py
-  renderCairo rg 1e-5 (ColorRGBA 1.0 0.3 0.3 0.2) $ do
+  renderCairo rg 1e-4 (ColorRGBA 1.0 0.3 0.3 0.2) $ do
     background 0.0 0.0 0.0 1.0
     scale 0.5 $ testRandom
   C.restore  
@@ -114,7 +114,7 @@ testHSL_render px py = do
   let rg = R.mkStdGen 12345
   C.save
   preamble px py
-  renderCairo rg 1e-5 (ColorRGBA 0.1 0.1 1.0 0.3) $ do
+  renderCairo rg 1e-4 (ColorRGBA 0.1 0.1 1.0 0.3) $ do
     background 0.0 0.0 0.0 1.0
     translate (-0.25) (-0.25) $
       scale 0.35 $
@@ -131,7 +131,7 @@ testHSL2_render px py = do
   let rg = R.mkStdGen 12345
   C.save
   preamble px py
-  renderCairo rg 1e-5 (ColorRGBA 1.0 0.0 0.0 0.2) $ do
+  renderCairo rg 1e-4 (ColorRGBA 1.0 0.0 0.0 0.2) $ do
     background 0.98 0.98 0.98 1.0
     translate (-0.2) (-0.2) $
       scale 0.5 $
