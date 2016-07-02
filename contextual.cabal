@@ -18,10 +18,11 @@ cabal-version:       >=1.10
 executable contextual
   main-is:             Test.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  other-modules:       Contextual, CairoBackend
+  other-modules:       Contextual, CairoBackend, BlazeBackend
   --other-extensions:    OverloadedStrings
   build-depends:       base
                      , cairo
+                     , blaze-svg
                      , colour
                      , containers
                      , free
