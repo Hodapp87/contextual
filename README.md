@@ -54,7 +54,6 @@ here.  Alongside this: A saner way of specifying colors.
 * Some optimization for the use of Cairo, e.g. if we are rendering a
 big scene to a raster image, then doing it in layers of N primitives
 may make sense to avoid building up huge scene graphs.
-* Support for animation?
 
 ### Other Backends
 
@@ -93,3 +92,10 @@ that just uses the parts I need
 * Am I using
 [Comonad](https://gelisam.blogspot.co.uk/2013/07/comonads-are-neighbourhoods-not-objects.html)
 implicitly?  Should I be using it explicitly?
+
+### Possibly-farfetched
+
+* Support for animation
+* Extend support to 3D (same idea as in
+  [Structure Synth](http://blog.hvidtfeldts.net/index.php/category/structure-synth/)
+  from the amazing Syntopia blog).
