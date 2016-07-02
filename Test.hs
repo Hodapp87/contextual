@@ -124,7 +124,7 @@ testHSL_render px py = do
 testHSL2 :: Node ()
 testHSL2 = do
   square
-  shiftHSL 6 0.98 0.98 1.07 $ rotate (pi/9) $ translate 0.45 (-0.17) $ scale 0.9 $ testHSL2
+  shiftHSL 6 0.98 0.98 1.07 $ rotate (pi/7) $ translate 0.4 (-0.05) $ scale2 0.9 0.7 $ testHSL2
 
 testHSL2_render :: Int -> Int -> C.Render ()
 testHSL2_render px py = do
@@ -133,8 +133,8 @@ testHSL2_render px py = do
   preamble px py
   renderCairo rg 1e-5 (ColorRGBA 1.0 0.0 0.0 0.2) $ do
     background 0.98 0.98 0.98 1.0
-    translate (-0.25) (-0.25) $
-      scale 0.35 $
+    translate (-0.2) (-0.2) $
+      scale 0.5 $
       testHSL2
   C.restore  
 
@@ -158,16 +158,18 @@ main :: IO ()
 main = do
   let px = 1000
       py = 1000
+  {-
   forM_ [12345, 12346, 12347] $ \seed -> do
     C.withImageSurface C.FormatARGB32 px py $ \surf -> do
       C.renderWith surf $ testRandom_render px py seed
       C.surfaceWriteToPNG surf ("testRandom" ++ show seed ++ ".png")
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ testHSL_render px py
-    C.surfaceWriteToPNG surf ("testHSL.png")
+    C.surfaceWriteToPNG surf ("testHSL.png")-}
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ testHSL2_render px py
     C.surfaceWriteToPNG surf ("testHSL2.png")
+  {-
   C.withSVGSurface "testHSL.svg"
     (fromIntegral px) (fromIntegral py) $
     \surf -> C.renderWith surf $ testHSL_render px py
@@ -176,4 +178,4 @@ main = do
     C.surfaceWriteToPNG surf ("sierpinski.png")
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ notSierpinski_render px py
-    C.surfaceWriteToPNG surf ("notSierpinski.png")
+    C.surfaceWriteToPNG surf ("notSierpinski.png")-}

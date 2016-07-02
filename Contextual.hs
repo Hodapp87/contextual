@@ -29,7 +29,7 @@ import Control.Monad.Free
 data NodeF x = Square x
              | Triangle x
              | Line x
-             | Scale Double (Node x) x
+             | Scale Double Double (Node x) x
              | Translate Double Double (Node x) x
              | Rotate Double (Node x) x
              | Shear Double Double (Node x) x
@@ -45,7 +45,7 @@ instance Functor NodeF where
   fmap f (Square x) = Square $ f x
   fmap f (Triangle x) = Triangle $ f x
   fmap f (Line x) = Line $ f x
-  fmap f (Scale n c x) = Scale n (fmap f c) $ f x
+  fmap f (Scale sx sy c x) = Scale sx sy (fmap f c) $ f x
   fmap f (Translate dx dy c x) = Translate dx dy (fmap f c) $ f x
   fmap f (Rotate a c x) = Rotate a (fmap f c) $ f x
   fmap f (Shear sx sy c x) = Shear sx sy (fmap f c) $ f x
@@ -69,7 +69,13 @@ line = liftF $ Line ()
 
 -- | Uniform scaling in X & Y of the surrounded 'Node'
 scale :: Double -> Node () -> Node ()
-scale n c = liftF $ Scale n c ()
+scale n c = liftF $ Scale n n c ()
+
+-- | Separate scaling in X & Y of the surrounded 'Node'
+scale2 :: Double -- ^ X scale
+       -> Double -- ^ Y scale
+       -> Node () -> Node ()
+scale2 sx sy c = liftF $ Scale sx sy c ()
 
 -- | Translation in X & Y of the surrounded 'Node'
 translate :: Double -> Double -> Node () -> Node ()
@@ -130,8 +136,8 @@ showNode (Pure _) = []
 showNode (Free (Square c)) = "square" : showNode c
 showNode (Free (Triangle c)) = "triangle" : showNode c
 showNode (Free (Line c)) = "line" : showNode c
-showNode (Free (Scale n c' c)) =
-  ("scale " ++ show n ++ " {") : rest ++ ["}"] ++ showNode c
+showNode (Free (Scale sx sy c' c)) =
+  ("scale " ++ show sx ++ "," ++ show sy ++ " {") : rest ++ ["}"] ++ showNode c
   where rest = indent "  " $ showNode c'
 showNode (Free (Translate dx dy c' c)) =
   ("translate " ++ show dx ++ "," ++ show dy ++ " {") : rest ++ ["}"] ++ showNode c

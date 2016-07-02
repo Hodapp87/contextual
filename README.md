@@ -44,7 +44,6 @@ throw off the aspect ratio - squares will be drawn as rectangles.
 primitives or average depth.
 * Stopping rendering on grammars that don't converge (e.g. limiting
 recursion depth or number of primitives)
-* Non-uniform scaling
 * Support for separate stroke and fill, and perhaps thickness
 * Better colorspace than "plain" RGB.
 [colour](https://hackage.haskell.org/package/colour) can probably help

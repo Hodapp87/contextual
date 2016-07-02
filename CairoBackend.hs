@@ -76,9 +76,9 @@ renderCairo' minScale node = do
         put $ ctxt { rand = g }
   case node of
     -- N.B. Only proceed if global scale is large enough
-    (Free (Scale n c' c)) -> when (scale ctxt > minScale) $ do
-      put $ ctxt { scale = scale ctxt * n }
-      xformAndRestore c' $ C.scale n n
+    (Free (Scale sx sy c' c)) -> when (scale ctxt > minScale) $ do
+      put $ ctxt { scale = scale ctxt * min sx sy }
+      xformAndRestore c' $ C.scale sx sy
       renderCairo' minScale c
     (Free (Translate dx dy c' c)) -> do
       xformAndRestore c' $ C.translate dx dy
