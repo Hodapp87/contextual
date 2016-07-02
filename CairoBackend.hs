@@ -81,6 +81,18 @@ renderCairo' minScale node = do
         C.closePath
         C.fill
       renderCairo' minScale c
+    (Free (Fill r g b a c' c)) -> do
+      let rgba = ctxtFill ctxt
+          rgba' = clampRGBA $ ColorRGBA { colorR = r
+                                        , colorG = g
+                                        , colorB = b
+                                        , colorA = a
+                                        }
+      -- TODO: This is nearly identical to ShiftRGBA.  I should
+      -- probably factor it out somehow.
+      put $ ctxt { ctxtFill = rgba' }
+      xformAndRestore c' $ setSourceRGBA' rgba'
+      renderCairo' minScale c
     (Free (Random p c1 c2 c)) -> do
       -- Get a random sample in [0,1]:
       let g = ctxtRand ctxt
@@ -126,23 +138,23 @@ renderCairo' minScale node = do
     (Free _) -> error $ "Unsupported type in renderCairo"
     (Pure _) -> return ()
 
+-- The above method probably makes more excessive use of save/restore
+-- than is strictly necessary.  We could compose transformations on
+-- our own and 'flatten' things to not require a stack.
+
 -- | Produce a Cairo render from a 'Node' and some starting information.
 renderCairo :: R.RandomGen r => r -- ^ Random generator
             -> Double -- ^ Minimum scale (below this, recursion
                       -- terminates)
-            -> ColorRGBA -- ^ Starting color
             -> Node a -- ^ Scene to render
             -> C.Render ()
-renderCairo rg minScale color node = do
-  let startCtxt = Context { ctxtScale = 1.0, ctxtFill = color, ctxtRand = rg }
-  setSourceRGBA' color
+renderCairo rg minScale node = do
+  let startCtxt = Context { ctxtScale = 1.0
+                          , ctxtFill = ColorRGBA 0.0 0.0 0.0 1.0
+                          , ctxtRand = rg }
   execStateT (renderCairo' minScale node) startCtxt
   return ()
   -- TODO: Fix the types around here as they need not all be ()
-
--- The above method probably makes more excessive use of save/restore
--- than is strictly necessary.  We could compose transformations on
--- our own and 'flatten' things to not require a stack.
 
 -- | Sets up a new environment for a given image size in pixels.  This
 -- sets up the coordinate space to go from (-1,-1) to (1,1).  Calling

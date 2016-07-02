@@ -37,6 +37,7 @@ data NodeF x = Square x
              | Rotate Double (Node x) x
              | Shear Double Double (Node x) x
              | Random Double (Node x) (Node x) x
+             | Fill Double Double Double Double (Node x) x
              | ShiftRGBA Double Double Double Double (Node x) x
              | ShiftHSL Double Double Double Double (Node x) x
              | Background Double Double Double Double x
@@ -57,17 +58,17 @@ triangle = liftF $ Triangle ()
 line :: Node ()
 line = liftF $ Line ()
 
--- | Uniform scaling in X & Y of the surrounded 'Node'
+-- | Uniform scaling in X & Y of the child 'Node'
 scale :: Double -> Node () -> Node ()
 scale n c = liftF $ Scale n n c ()
 
--- | Separate scaling in X & Y of the surrounded 'Node'
+-- | Separate scaling in X & Y of the child 'Node'
 scale2 :: Double -- ^ X scale
        -> Double -- ^ Y scale
        -> Node () -> Node ()
 scale2 sx sy c = liftF $ Scale sx sy c ()
 
--- | Translation in X & Y of the surrounded 'Node'
+-- | Translation in X & Y of the child 'Node'
 translate :: Double -> Double -> Node () -> Node ()
 translate dx dy c = liftF $ Translate dx dy c ()
 
@@ -77,7 +78,7 @@ translate dx dy c = liftF $ Translate dx dy c ()
 rotate :: Double -> Node () -> Node ()
 rotate a c = liftF $ Rotate a c ()
 
--- | Shear the surrounded 'Node' with the given X and Y coefficients.
+-- | Shear the child 'Node' with the given X and Y coefficients.
 shear :: Double -> Double -> Node () -> Node ()
 shear sx sy c = liftF $ Shear sx sy c ()
 
@@ -86,6 +87,15 @@ shear sx sy c = liftF $ Shear sx sy c ()
 -- selected with probability '(1-p)'.
 random :: Double -> Node () -> Node () -> Node ()
 random p c1 c2 = liftF $ Random p c1 c2 ()
+
+-- | Set fill color (ignoring any 'inherited' fill color, regardless
+-- of alpha) on the child 'Node'.
+fill :: Double -- ^ Red
+     -> Double -- ^ Green
+     -> Double -- ^ Blue
+     -> Double -- ^ Alpha (transparency)
+     -> Node () -> Node ()
+fill r g b a c = liftF $ Fill r g b a c ()
 
 -- | Shift the color by the given factors - which apply to red, green,
 -- blue, and alpha, respectively.  A value of 1 leaves that channel
@@ -147,6 +157,10 @@ showNode (Free (ShiftHSL dh s l a c' c)) =
    "," ++ show a ++ " {") : rest ++ ["}"] ++ showNode c
   where rest = indent "  " $ showNode c'
   -- TODO: Remove some of the boilerplate for all the transformations above
+showNode (Free (Fill r g b a c' c)) =
+  ("fill " ++ show r ++ "," ++ show g ++ "," ++ show b ++
+   "," ++ show a ++ " {") : rest ++ ["}"] ++ showNode c
+  where rest = indent "  " $ showNode c'
 showNode (Free (Random p c1 c2 c)) =
   ("random p=" ++ show p ++ " {") : (indent "  " $ showNode c1) ++
   ("}, p=" ++ show (1-p) ++ " {") : (indent "  " $ showNode c2) ++ ["}"] ++
