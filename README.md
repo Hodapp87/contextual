@@ -69,7 +69,7 @@ allow this to run in, and render in, the browser
 SVG? WebGL?)
 * *GL:* OpenGL/WebGL rendering should be possible with the current
 primitives.  Perhaps start at
-[Beautiful Code](http://www.renci.org/wp-content/pub/tutorials/BeautifulCode.pdf))
+[Beautiful Code](http://www.renci.org/wp-content/pub/tutorials/BeautifulCode.pdf).
 * *IHaskell:* Integration with [IHaskell](https://github.com/gibiansky/IHaskell)
 and [Jupyter](http://jupyter.org/).  Perhaps I can use the mechanism
 that
@@ -91,5 +91,5 @@ express recursion natively or to a simplified expression
 [Free](https://hackage.haskell.org/package/free/docs/Control-Monad-Free.html)
 that just uses the parts I need
 * Am I using
-[Comonad](http://www.haskellforall.com/2013/02/you-could-have-invented-comonads.html)
+[Comonad](https://gelisam.blogspot.co.uk/2013/07/comonads-are-neighbourhoods-not-objects.html)
 implicitly?  Should I be using it explicitly?
