@@ -185,7 +185,7 @@ showNode (Free (Random p c1 c2 c)) =
 showNode (Free (Background r g b a c)) =
   ("background " ++ show r ++ "," ++ show g ++ "," ++ show b ++ "," ++ show a) :
   showNode c
-showNode (Free t@_) = error $ "Unknown type, " ++ show t
+showNode (Free t) = error $ "Unknown type, " ++ show t
 
 indent :: String -> [String] -> [String]
 indent pfx = map (pfx ++)
@@ -215,3 +215,10 @@ data Context a = Context { ctxtScale :: Double -- ^ Overall scale
                          , ctxtStroke :: ColorRGBA -- ^ Current stroke color
                          , ctxtRand :: a -- ^ RandomGen
                          }
+
+-- | Generate a default context, given a random number generator.
+defaultContext :: r -> Context r
+defaultContext rg = Context { ctxtScale = 1.0
+                            , ctxtFill = ColorRGBA 0.0 0.0 0.0 1.0
+                            , ctxtStroke = ColorRGBA 0.0 0.0 0.0 1.0
+                            , ctxtRand = rg }

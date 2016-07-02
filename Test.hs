@@ -51,7 +51,7 @@ notSierpinski_render px py = do
   preamble px py
   renderCairo rg 1e-3 $ do
     background 0.0 0.0 0.0 1.0
-    fill 0.4 1.0 0.4 0.8 $ notSierpinski
+    stroke 0 0 0 0 $ fill 0.4 1.0 0.4 0.8 $ notSierpinski
   C.restore
 
 -- Not exactly Sierpinski, but an attempt at it
@@ -79,7 +79,7 @@ sierpinski_render px py = do
   preamble px py
   renderCairo rg 1e-3 $ do
     background 0.0 0.0 0.0 1.0
-    fill 1.0 0.3 0.3 0.2 $ sierpinski
+    stroke 0 0 0 0 $ fill 1.0 0.3 0.3 0.2 $ sierpinski
   C.restore
 
 testRandom :: Node ()
@@ -178,4 +178,5 @@ main = do
     C.surfaceWriteToPNG surf ("sierpinski.png")
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ notSierpinski_render px py
-    C.surfaceWriteToPNG surf ("notSierpinski.png")-}
+    C.surfaceWriteToPNG surf ("notSierpinski.png")
+  -}

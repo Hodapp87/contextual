@@ -94,6 +94,9 @@ renderCairo' minScale node = do
         setSourceRGBA' $ ctxtStroke ctxt
         C.stroke
       renderCairo' minScale c
+    -- Note that we do not actually tell Cairo about colors until we
+    -- actually need to draw something.  We *can* use C.setSourceRGBA
+    -- anytime color changes in our own context, but there's no point.
     (Free (Fill r g b a c' c)) -> do
       let rgba = ctxtFill ctxt
           rgba' = clampRGBA $ ColorRGBA { colorR = r
@@ -104,6 +107,16 @@ renderCairo' minScale node = do
       -- TODO: This is nearly identical to ShiftRGBA.  I should
       -- probably factor it out somehow.
       put $ ctxt { ctxtFill = rgba' }
+      xformAndRestore_ c'
+      renderCairo' minScale c
+    (Free (Stroke r g b a c' c)) -> do
+      let rgba = ctxtStroke ctxt
+          rgba' = clampRGBA $ ColorRGBA { colorR = r
+                                        , colorG = g
+                                        , colorB = b
+                                        , colorA = a
+                                        }
+      put $ ctxt { ctxtStroke = rgba' }
       xformAndRestore_ c'
       renderCairo' minScale c
     (Free (Random p c1 c2 c)) -> do
@@ -162,10 +175,7 @@ renderCairo :: R.RandomGen r => r -- ^ Random generator
             -> Node a -- ^ Scene to render
             -> C.Render ()
 renderCairo rg minScale node = do
-  let startCtxt = Context { ctxtScale = 1.0
-                          , ctxtFill = ColorRGBA 0.0 0.0 0.0 1.0
-                          , ctxtStroke = ColorRGBA 0.0 0.0 0.0 1.0
-                          , ctxtRand = rg }
+  let startCtxt = defaultContext rg
   execStateT (renderCairo' minScale node) startCtxt
   return ()
   -- TODO: Fix the types around here as they need not all be ()
@@ -180,4 +190,5 @@ preamble px py = do
   C.setOperator C.OperatorOver
   C.translate (px' / 2) (py' / 2)
   C.scale px' py'
-  C.setLineWidth 0.01
+  -- TODO: Make line width configurable!
+  C.setLineWidth 0.005
