@@ -158,18 +158,16 @@ main :: IO ()
 main = do
   let px = 1000
       py = 1000
-  {-
   forM_ [12345, 12346, 12347] $ \seed -> do
     C.withImageSurface C.FormatARGB32 px py $ \surf -> do
       C.renderWith surf $ testRandom_render px py seed
       C.surfaceWriteToPNG surf ("testRandom" ++ show seed ++ ".png")
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ testHSL_render px py
-    C.surfaceWriteToPNG surf ("testHSL.png")-}
+    C.surfaceWriteToPNG surf ("testHSL.png")
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ testHSL2_render px py
     C.surfaceWriteToPNG surf ("testHSL2.png")
-  {-
   C.withSVGSurface "testHSL.svg"
     (fromIntegral px) (fromIntegral py) $
     \surf -> C.renderWith surf $ testHSL_render px py
@@ -178,4 +176,4 @@ main = do
     C.surfaceWriteToPNG surf ("sierpinski.png")
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ notSierpinski_render px py
-    C.surfaceWriteToPNG surf ("notSierpinski.png")-}
+    C.surfaceWriteToPNG surf ("notSierpinski.png")

@@ -1,5 +1,7 @@
 # Contextual
 
+[![Build Status](https://travis-ci.org/Hodapp87/contextual.svg?branch=master)](https://travis-ci.org/Hodapp87/contextual)
+
 This is yet another rewriting of my software for drawing algorithmic
 images based on a context-free grammar, eventually a nondeterministic
 one.
@@ -34,9 +36,10 @@ These are all generated from `Test.hs`.
 
 ![Not Sierpinski](notSierpinski.png)
 
-## Wish-list for Contextual
+## TODOs & Wish-list for Contextual
 
-* Travis CI build
+### Core
+
 * A way to specify canvas size.  Right now, non-square images will
 throw off the aspect ratio - squares will be drawn as rectangles.
 * Support for other primitives: circle, line, arc
@@ -48,38 +51,45 @@ recursion depth or number of primitives)
 * Better colorspace than "plain" RGB.
 [colour](https://hackage.haskell.org/package/colour) can probably help
 here.  Alongside this: A saner way of specifying colors.
-* Support for exporting SVG without needing something as heavy as
-Cairo (perhaps
-[blaze-svg](https://hackage.haskell.org/package/blaze-svg)).
-* Use of Data.Reify to transform recursive structures, perhaps to
-backends that can express recursion natively or to a simplified
-expression
-* Integration with [IHaskell](https://github.com/gibiansky/IHaskell)
+* Some optimization for the use of Cairo, e.g. if we are rendering a
+big scene to a raster image, then doing it in layers of N primitives
+may make sense to avoid building up huge scene graphs.
+* Support for animation?
+
+### Other Backends
+
+* *Lighter SVG:* SVG export via
+[blaze-svg](https://hackage.haskell.org/package/blaze-svg).  Cairo
+exports SVG, but Cairo is a heavy dependency that may not be available
+everywhere.
+* *Web:* Some magic with [ghcjs](https://github.com/ghcjs/ghcjs) (looks like
+[stack](http://docs.haskellstack.org/en/stable/ghcjs/) supports it) to
+allow this to run in, and render in, the browser
+([Canvas](https://github.com/ghcjs/ghcjs-base/tree/master/JavaScript/Web/Canvas)?
+SVG? WebGL?)
+* *GL:* OpenGL/WebGL rendering should be possible with the current
+primitives.  Perhaps start at
+[Beautiful Code](http://www.renci.org/wp-content/pub/tutorials/BeautifulCode.pdf))
+* *IHaskell:* Integration with [IHaskell](https://github.com/gibiansky/IHaskell)
 and [Jupyter](http://jupyter.org/).  Perhaps I can use the mechanism
 that
 [ihaskell-charts](https://hackage.haskell.org/package/ihaskell-charts)
 uses, which looks like it ties in with
-[Chart-cairo](https://hackage.haskell.org/package/Chart-cairo).  Some
-starting points on that:
-    * [Gtk2hs Tutorial](http://www.muitovar.com/gtk2hs/app1.html),
-    * [Beautiful Code](http://www.renci.org/wp-content/pub/tutorials/BeautifulCode.pdf),
-    * [ihaskell-diagrams](https://github.com/gibiansky/IHaskell/blob/1b6d9081f2109fd50dcdbaebe9dbad1676a01d78/ihaskell-display/ihaskell-diagrams/IHaskell/Display/Diagrams.hs)
-* Some magic with [ghcjs](https://github.com/ghcjs/ghcjs) (looks like
-[stack](http://docs.haskellstack.org/en/stable/ghcjs/) supports it) to
-allow this to run in, and render in, the browser
-([Canvas](https://github.com/ghcjs/ghcjs-base/tree/master/JavaScript/Web/Canvas)?
-SVG?)
+[Chart-cairo](https://hackage.haskell.org/package/Chart-cairo).
+
+### General Tidiness/Refactoring
+
+* Use namespaces already!
+* Perhaps factor out `Context` since much of it will be repeated in
+other backends, particularly anything that does a more immediate-mode
+drawing and lacks the `save`/`restore` of Cairo.
+* Use of [Data.Reify](https://hackage.haskell.org/package/data-reify)
+to transform recursive structures, perhaps to backends that can
+express recursion natively or to a simplified expression
 * Separate modules for separate backends (as many other libraries do)
 * Perhaps rewriting using a simpler form of
 [Free](https://hackage.haskell.org/package/free/docs/Control-Monad-Free.html)
 that just uses the parts I need
-* Support for animation?
-* Some optimization for the use of Cairo, e.g. if we are rendering a
-big scene to a raster image, then doing it in layers of N primitives
-may make sense to avoid building up huge scene graphs.
-* Perhaps factor out `Context` since much of it will be repeated in
-other backends, particularly anything that does a more immediate-mode
-drawing and lacks the `save`/`restore` of Cairo.
 * Am I using
 [Comonad](http://www.haskellforall.com/2013/02/you-could-have-invented-comonads.html)
 implicitly?  Should I be using it explicitly?
