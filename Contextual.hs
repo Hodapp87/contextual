@@ -1,6 +1,6 @@
 {-|
-Module      : CairoBackend
-Description : Cairo backend for Contextual
+Module      : Contextual
+Description : Main module for Contextual
 Copyright   : (c) Chris Hodapp, 2016
 License     : ?
 Maintainer  : Hodapp87@gmail.com
