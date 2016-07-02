@@ -22,6 +22,8 @@ contextual_clojure> for a Clojure one.
 
 -}
 
+{-# LANGUAGE DeriveFunctor #-}
+
 module Contextual where
 
 import Control.Monad.Free
@@ -37,22 +39,9 @@ data NodeF x = Square x
              | ShiftRGBA Double Double Double Double (Node x) x
              | ShiftHSL Double Double Double Double (Node x) x
              | Background Double Double Double Double x
-             deriving (Show);
+             deriving (Show, Functor);
 
 type Node = Free NodeF
-
-instance Functor NodeF where
-  fmap f (Square x) = Square $ f x
-  fmap f (Triangle x) = Triangle $ f x
-  fmap f (Line x) = Line $ f x
-  fmap f (Scale sx sy c x) = Scale sx sy (fmap f c) $ f x
-  fmap f (Translate dx dy c x) = Translate dx dy (fmap f c) $ f x
-  fmap f (Rotate a c x) = Rotate a (fmap f c) $ f x
-  fmap f (Shear sx sy c x) = Shear sx sy (fmap f c) $ f x
-  fmap f (Random p c1 c2 x) = Random p (fmap f c1) (fmap f c2) $ f x
-  fmap f (ShiftRGBA r g b a c x) = ShiftRGBA r g b a (fmap f c) $ f x
-  fmap f (ShiftHSL dh s l a c x) = ShiftHSL dh s l a (fmap f c) $ f x
-  fmap f (Background r g b a x) = Background r g b a $ f x
 
 -- | Square of sidelength 1, center (0,0), axis-aligned
 square :: Node ()
