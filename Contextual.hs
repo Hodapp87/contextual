@@ -37,6 +37,7 @@ data NodeF x = Square x
              | Rotate Double (Node x) x
              | Shear Double Double (Node x) x
              | Random Double (Node x) (Node x) x
+             | Stroke Double Double Double Double (Node x) x
              | Fill Double Double Double Double (Node x) x
              | ShiftRGBA Double Double Double Double (Node x) x
              | ShiftHSL Double Double Double Double (Node x) x
@@ -88,6 +89,18 @@ shear sx sy c = liftF $ Shear sx sy c ()
 random :: Double -> Node () -> Node () -> Node ()
 random p c1 c2 = liftF $ Random p c1 c2 ()
 
+-- | Set stroke color (ignoring any 'inherited' stroke color, regardless
+-- of alpha) on the child 'Node'.
+stroke :: Double -- ^ Red
+     -> Double -- ^ Green
+     -> Double -- ^ Blue
+     -> Double -- ^ Alpha (transparency)
+     -> Node () -> Node ()
+stroke r g b a c = liftF $ Stroke r g b a c ()
+
+-- TODO: If stroke and fill are that close perhaps I can just make one
+-- 'set color' constructor/transform, and make stroke/fill a parameter.
+
 -- | Set fill color (ignoring any 'inherited' fill color, regardless
 -- of alpha) on the child 'Node'.
 fill :: Double -- ^ Red
@@ -97,9 +110,9 @@ fill :: Double -- ^ Red
      -> Node () -> Node ()
 fill r g b a c = liftF $ Fill r g b a c ()
 
--- | Shift the color by the given factors - which apply to red, green,
--- blue, and alpha, respectively.  A value of 1 leaves that channel
--- unchanged.
+-- | Shift the fill color by the given factors - which apply to red,
+-- green, blue, and alpha, respectively.  A value of 1 leaves that
+-- channel unchanged.
 shiftRGBA :: Double -- ^ Red factor
           -> Double -- ^ Green factor
           -> Double -- ^ Blue factor
@@ -107,11 +120,11 @@ shiftRGBA :: Double -- ^ Red factor
           -> Node () -> Node ()
 shiftRGBA r g b a c = liftF $ ShiftRGBA r g b a c ()
 
--- | Shift the color in HSL (hue, saturation, lightness) space.  The
--- first parameter is a delta, in degrees, added to hue (thus a value
--- of 0 is neutral).  The remaining parameters are factors applied to
--- saturation, value, and alpha, respectively (and as with 'shiftRGBA'
--- a value of 1 is neutral).
+-- | Shift the fill color in HSL (hue, saturation, lightness) space.
+-- The first parameter is a delta, in degrees, added to hue (thus a
+-- value of 0 is neutral).  The remaining parameters are factors
+-- applied to saturation, value, and alpha, respectively (and as with
+-- 'shiftRGBA' a value of 1 is neutral).
 shiftHSL :: Double -- ^ Hue delta (degrees)
          -> Double -- ^ Saturation factor
          -> Double -- ^ Lightness factor
@@ -161,6 +174,10 @@ showNode (Free (Fill r g b a c' c)) =
   ("fill " ++ show r ++ "," ++ show g ++ "," ++ show b ++
    "," ++ show a ++ " {") : rest ++ ["}"] ++ showNode c
   where rest = indent "  " $ showNode c'
+showNode (Free (Stroke r g b a c' c)) =
+  ("stroke " ++ show r ++ "," ++ show g ++ "," ++ show b ++
+   "," ++ show a ++ " {") : rest ++ ["}"] ++ showNode c
+  where rest = indent "  " $ showNode c'
 showNode (Free (Random p c1 c2 c)) =
   ("random p=" ++ show p ++ " {") : (indent "  " $ showNode c1) ++
   ("}, p=" ++ show (1-p) ++ " {") : (indent "  " $ showNode c2) ++ ["}"] ++
@@ -195,5 +212,6 @@ clampRGBA rgba = ColorRGBA { colorR = clamp $ colorR rgba
 -- | Rendering context
 data Context a = Context { ctxtScale :: Double -- ^ Overall scale
                          , ctxtFill :: ColorRGBA -- ^ Current fill color
+                         , ctxtStroke :: ColorRGBA -- ^ Current stroke color
                          , ctxtRand :: a -- ^ RandomGen
                          }

@@ -39,7 +39,10 @@ renderCairo' :: R.RandomGen a => Double -- ^ Minimum scale
              -> StateT (Context a) C.Render ()
 renderCairo' minScale node = do
   ctxt <- get
-  let --xformAndRestore :: C.Render () -> Node b -> StateT (Context a) C.Render ()
+  let -- Add some transformation, render the sub-node, and remove that
+      -- transformation:
+      --
+      --xformAndRestore :: C.Render () -> Node b -> StateT (Context a) C.Render ()
       xformAndRestore sub xform = do
         -- Start Cairo context, apply transformation:
         lift $ do C.save
@@ -51,6 +54,8 @@ renderCairo' minScale node = do
         -- Restore our context, but pass forward the RNG:
         g <- ctxtRand <$> get
         put $ ctxt { ctxtRand = g }
+      -- Likewise, but with no transformation:
+      xformAndRestore_ sub = xformAndRestore sub $ return ()
   case node of
     -- N.B. Only proceed if global scale is large enough
     (Free (Scale sx sy c' c)) -> when (ctxtScale ctxt > minScale) $ do
@@ -67,8 +72,13 @@ renderCairo' minScale node = do
       xformAndRestore c' $ C.transform $ CM.Matrix 1.0 sx sy 1.0 0.0 0.0
       renderCairo' minScale c
     (Free (Square c)) -> do
-      lift $ C.rectangle (-0.5) (-0.5) 1 1
-      lift $ C.fill
+      lift $ do
+        C.rectangle (-0.5) (-0.5) 1 1
+        setSourceRGBA' $ ctxtFill ctxt
+        C.fill
+        C.rectangle (-0.5) (-0.5) 1 1
+        setSourceRGBA' $ ctxtStroke ctxt
+        C.stroke
       renderCairo' minScale c
     (Free (Triangle c)) -> do
       -- C.setLineWidth 5
@@ -79,7 +89,10 @@ renderCairo' minScale node = do
         C.lineTo (-c60) s60
         C.lineTo (-c60) (-s60)
         C.closePath
+        setSourceRGBA' $ ctxtFill ctxt
         C.fill
+        setSourceRGBA' $ ctxtStroke ctxt
+        C.stroke
       renderCairo' minScale c
     (Free (Fill r g b a c' c)) -> do
       let rgba = ctxtFill ctxt
@@ -91,7 +104,7 @@ renderCairo' minScale node = do
       -- TODO: This is nearly identical to ShiftRGBA.  I should
       -- probably factor it out somehow.
       put $ ctxt { ctxtFill = rgba' }
-      xformAndRestore c' $ setSourceRGBA' rgba'
+      xformAndRestore_ c'
       renderCairo' minScale c
     (Free (Random p c1 c2 c)) -> do
       -- Get a random sample in [0,1]:
@@ -108,7 +121,7 @@ renderCairo' minScale node = do
                                         , colorA = colorA rgba * a
                                         }
       put $ ctxt { ctxtFill = rgba' }
-      xformAndRestore c' $ setSourceRGBA' rgba'
+      xformAndRestore_ c'
       renderCairo' minScale c
     (Free (ShiftHSL dh sf lf af c' c)) -> do
       let rgba = ctxtFill ctxt
@@ -124,7 +137,7 @@ renderCairo' minScale node = do
                             , colorA = clamp $ colorA rgba * af
                             }
       put $ ctxt { ctxtFill = rgba' }
-      xformAndRestore c' $ setSourceRGBA' rgba'
+      xformAndRestore_ c'
       renderCairo' minScale c
     (Free (Background r g b a c)) -> do
       -- save & restore is probably overkill here, but this should
@@ -151,6 +164,7 @@ renderCairo :: R.RandomGen r => r -- ^ Random generator
 renderCairo rg minScale node = do
   let startCtxt = Context { ctxtScale = 1.0
                           , ctxtFill = ColorRGBA 0.0 0.0 0.0 1.0
+                          , ctxtStroke = ColorRGBA 0.0 0.0 0.0 1.0
                           , ctxtRand = rg }
   execStateT (renderCairo' minScale node) startCtxt
   return ()
@@ -166,3 +180,4 @@ preamble px py = do
   C.setOperator C.OperatorOver
   C.translate (px' / 2) (py' / 2)
   C.scale px' py'
+  C.setLineWidth 0.01
