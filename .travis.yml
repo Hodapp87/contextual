@@ -16,7 +16,7 @@ before_install:
 
 install:
 - stack setup
-- stack build --only-snapshot
+- stack build
 - stack exec contextual
 
 before_script:
