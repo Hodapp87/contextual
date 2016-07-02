@@ -48,6 +48,7 @@ primitives or average depth.
 * Stopping rendering on grammars that don't converge (e.g. limiting
 recursion depth or number of primitives)
 * Support for separate stroke and fill, and perhaps thickness
+* Bring the 'starting' color out of the backend-specific code
 * Better colorspace than "plain" RGB.
 [colour](https://hackage.haskell.org/package/colour) can probably help
 here.  Alongside this: A saner way of specifying colors.
@@ -79,6 +80,7 @@ uses, which looks like it ties in with
 ### General Tidiness/Refactoring
 
 * Use namespaces already!
+* Typeclass for backends?
 * Perhaps factor out `Context` since much of it will be repeated in
 other backends, particularly anything that does a more immediate-mode
 drawing and lacks the `save`/`restore` of Cairo.

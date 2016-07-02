@@ -27,6 +27,7 @@ contextual_clojure> for a Clojure one.
 module Contextual where
 
 import Control.Monad.Free
+import qualified Data.Colour.SRGB as SRGB
 
 data NodeF x = Square x
              | Triangle x
@@ -157,3 +158,28 @@ showNode (Free t@_) = error $ "Unknown type, " ++ show t
 
 indent :: String -> [String] -> [String]
 indent pfx = map (pfx ++)
+
+clamp :: (Ord f, Num f) => f -> f
+clamp v = if v < 0 then 0 else if v > 1 then 1 else v
+
+-- | Simple color type, probably going away at some point.  All
+-- components should be in the range [0,1].
+data ColorRGBA = ColorRGBA { colorR :: Double
+                           , colorG :: Double
+                           , colorB :: Double
+                           , colorA :: Double
+                           } deriving Show
+
+-- | Clamp a 'ColorRGBA' so all colors are within [0,1].
+clampRGBA :: ColorRGBA -> ColorRGBA
+clampRGBA rgba = ColorRGBA { colorR = clamp $ colorR rgba
+                           , colorG = clamp $ colorG rgba
+                           , colorB = clamp $ colorB rgba
+                           , colorA = clamp $ colorA rgba
+                           }
+
+-- | Rendering context
+data Context a = Context { ctxtScale :: Double -- ^ Overall scale
+                         , ctxtFill :: ColorRGBA -- ^ Current fill color
+                         , ctxtRand :: a -- ^ RandomGen
+                         }

@@ -18,7 +18,7 @@ Graphics.Rendering.Cairo.Render>.
 
 module CairoBackend (renderCairo, preamble, ColorRGBA(..)) where
 
-import Contextual hiding (scale)
+import Contextual
 
 import Control.Monad (when)
 import Control.Monad.Free
@@ -30,32 +30,9 @@ import qualified Data.Colour.RGBSpace.HSL as HSL
 import qualified Graphics.Rendering.Cairo as C 
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
-data ColorRGBA = ColorRGBA { colorR :: Double
-                           , colorG :: Double
-                           , colorB :: Double
-                           , colorA :: Double
-                           } deriving Show
-
 -- | Wrapper around 'C.setSourceRGBA' for 'ColorRGBA' arguments
 setSourceRGBA' :: ColorRGBA -> C.Render ()
 setSourceRGBA' c = C.setSourceRGBA (colorR c) (colorG c) (colorB c) (colorA c)
-
-clamp :: (Ord f, Num f) => f -> f
-clamp v = if v < 0 then 0 else if v > 1 then 1 else v
-
--- | Clamp a 'ColorRGBA' so all colors are within [0,1].
-clampRGBA :: ColorRGBA -> ColorRGBA
-clampRGBA rgba = ColorRGBA { colorR = clamp $ colorR rgba
-                           , colorG = clamp $ colorG rgba
-                           , colorB = clamp $ colorB rgba
-                           , colorA = clamp $ colorA rgba
-                           }
-
--- | Rendering context
-data Context a = Context { scale :: Double -- ^ Overall scale
-                         , fill :: ColorRGBA -- ^ Current fill color
-                         , rand :: a -- ^ RandomGen
-                         }
 
 renderCairo' :: R.RandomGen a => Double -- ^ Minimum scale
              -> Node b -- ^ Starting node
@@ -72,12 +49,12 @@ renderCairo' minScale node = do
         -- Restore the Cairo context:
         lift $ C.restore
         -- Restore our context, but pass forward the RNG:
-        g <- rand <$> get
-        put $ ctxt { rand = g }
+        g <- ctxtRand <$> get
+        put $ ctxt { ctxtRand = g }
   case node of
     -- N.B. Only proceed if global scale is large enough
-    (Free (Scale sx sy c' c)) -> when (scale ctxt > minScale) $ do
-      put $ ctxt { scale = scale ctxt * min sx sy }
+    (Free (Scale sx sy c' c)) -> when (ctxtScale ctxt > minScale) $ do
+      put $ ctxt { ctxtScale = ctxtScale ctxt * min sx sy }
       xformAndRestore c' $ C.scale sx sy
       renderCairo' minScale c
     (Free (Translate dx dy c' c)) -> do
@@ -106,23 +83,23 @@ renderCairo' minScale node = do
       renderCairo' minScale c
     (Free (Random p c1 c2 c)) -> do
       -- Get a random sample in [0,1]:
-      let g = rand ctxt
+      let g = ctxtRand ctxt
           (sample, g') = R.random g
-      put $ ctxt { rand = g' }
+      put $ ctxt { ctxtRand = g' }
       renderCairo' minScale (if sample < p then c1 else c2)
       renderCairo' minScale c
     (Free (ShiftRGBA r g b a c' c)) -> do
-      let rgba = fill ctxt
+      let rgba = ctxtFill ctxt
           rgba' = clampRGBA $ ColorRGBA { colorR = colorR rgba * r
                                         , colorG = colorG rgba * g
                                         , colorB = colorB rgba * b
                                         , colorA = colorA rgba * a
                                         }
-      put $ ctxt { fill = rgba' }
+      put $ ctxt { ctxtFill = rgba' }
       xformAndRestore c' $ setSourceRGBA' rgba'
       renderCairo' minScale c
     (Free (ShiftHSL dh sf lf af c' c)) -> do
-      let rgba = fill ctxt
+      let rgba = ctxtFill ctxt
           -- Get HSL & transform:
           (h,s,l) = HSL.hslView $
             SRGB.RGB (colorR rgba) (colorG rgba) (colorB rgba)
@@ -134,7 +111,7 @@ renderCairo' minScale node = do
                             , colorB = SRGB.channelBlue  rgb'
                             , colorA = clamp $ colorA rgba * af
                             }
-      put $ ctxt { fill = rgba' }
+      put $ ctxt { ctxtFill = rgba' }
       xformAndRestore c' $ setSourceRGBA' rgba'
       renderCairo' minScale c
     (Free (Background r g b a c)) -> do
@@ -149,9 +126,15 @@ renderCairo' minScale node = do
     (Free _) -> error $ "Unsupported type in renderCairo"
     (Pure _) -> return ()
 
-renderCairo :: R.RandomGen r => r -> Double -> ColorRGBA -> Node a -> C.Render ()
+-- | Produce a Cairo render from a 'Node' and some starting information.
+renderCairo :: R.RandomGen r => r -- ^ Random generator
+            -> Double -- ^ Minimum scale (below this, recursion
+                      -- terminates)
+            -> ColorRGBA -- ^ Starting color
+            -> Node a -- ^ Scene to render
+            -> C.Render ()
 renderCairo rg minScale color node = do
-  let startCtxt = Context { scale = 1.0, fill = color, rand = rg }
+  let startCtxt = Context { ctxtScale = 1.0, ctxtFill = color, ctxtRand = rg }
   setSourceRGBA' color
   execStateT (renderCairo' minScale node) startCtxt
   return ()
