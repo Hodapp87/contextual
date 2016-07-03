@@ -42,7 +42,9 @@ notSierpinski = do
                 rotate (4*pi3) $ xform rep6
                 rotate (5*pi3) $ xform rep6
   background 0.0 0.0 0.0 1.0
-  stroke 0 0 0 0 $ fill 0.4 1.0 0.4 0.8 $ scale 0.5 rep6
+  stroke 0.5 0 0.5 1.0 $ fill 0.4 1.0 0.4 0.8 $ scale 0.5 rep6
+  -- TODO: Figure out why the above strokes show up in Blaze backend
+  -- but not Cairo
 
 notSierpinski_render :: Int -> Int -> C.Render ()
 notSierpinski_render px py = do
@@ -200,15 +202,19 @@ main = do
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ testSquare_render px py
     C.surfaceWriteToPNG surf ("testSquare.png")
-  DT.writeFile "testSquare_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testSquare
+  DT.writeFile "testSquare_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-2 px py testSquare
 
+  {-
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ sierpinski_render px py
     C.surfaceWriteToPNG surf ("sierpinski.png")
   DT.writeFile "sierpinski_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-2 px py sierpinski
 
-  {-
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ notSierpinski_render px py
     C.surfaceWriteToPNG surf ("notSierpinski.png")
+  C.withSVGSurface "notSierpinski.svg"
+    (fromIntegral px) (fromIntegral py) $
+    \surf -> C.renderWith surf $ notSierpinski_render px py
+  DT.writeFile "notSierpinski_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-2 px py notSierpinski
   -}
