@@ -2,9 +2,8 @@
 
 [![Build Status](https://travis-ci.org/Hodapp87/contextual.svg?branch=master)](https://travis-ci.org/Hodapp87/contextual)
 
-This is yet another rewriting of my software for drawing algorithmic
-images based on a context-free grammar, eventually a nondeterministic
-one.
+This is a Haskell library for drawing algorithmic images based on
+context-free grammars.
 
 This was inspired by the wonderful
 [Context Free](http://www.contextfreeart.org/).  Over the course of
@@ -58,10 +57,6 @@ may make sense to avoid building up huge scene graphs.
 
 ### Other Backends
 
-* *Lighter SVG:* SVG export via
-[blaze-svg](https://hackage.haskell.org/package/blaze-svg).  Cairo
-exports SVG, but Cairo is a heavy dependency that may not be available
-everywhere.
 * *Web:* Some magic with [ghcjs](https://github.com/ghcjs/ghcjs) (looks like
 [stack](http://docs.haskellstack.org/en/stable/ghcjs/) supports it) to
 allow this to run in, and render in, the browser

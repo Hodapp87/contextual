@@ -201,6 +201,8 @@ data ColorRGBA = ColorRGBA { colorR :: Double
                            , colorA :: Double
                            } deriving Show
 
+
+
 -- | Clamp a 'ColorRGBA' so all colors are within [0,1].
 clampRGBA :: ColorRGBA -> ColorRGBA
 clampRGBA rgba = ColorRGBA { colorR = clamp $ colorR rgba

@@ -34,7 +34,7 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 setSourceRGBA' :: ColorRGBA -> C.Render ()
 setSourceRGBA' c = C.setSourceRGBA (colorR c) (colorG c) (colorB c) (colorA c)
 
-renderCairo' :: R.RandomGen a => Double -- ^ Minimum scale
+renderCairo' :: (R.RandomGen a, Show b) => Double -- ^ Minimum scale
              -> Node b -- ^ Starting node
              -> StateT (Context a) C.Render ()
 renderCairo' minScale node = do
@@ -161,7 +161,7 @@ renderCairo' minScale node = do
         C.paint
         C.restore
       renderCairo' minScale c
-    (Free _) -> error $ "Unsupported type in renderCairo"
+    (Free t) -> error $ "Unsupported type in renderCairo, " ++ show t
     (Pure _) -> return ()
 
 -- The above method probably makes more excessive use of save/restore
@@ -169,7 +169,7 @@ renderCairo' minScale node = do
 -- our own and 'flatten' things to not require a stack.
 
 -- | Produce a Cairo render from a 'Node' and some starting information.
-renderCairo :: R.RandomGen r => r -- ^ Random generator
+renderCairo :: (Show a, R.RandomGen r) => r -- ^ Random generator
             -> Double -- ^ Minimum scale (below this, recursion
                       -- terminates)
             -> Node a -- ^ Scene to render

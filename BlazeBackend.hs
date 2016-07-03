@@ -8,7 +8,13 @@ Stability   : experimental
 Portability : POSIX
 
 This is the backend for rendering a 'Node' grammar to an SVG via
-<https://hackage.haskell.org/package/blaze-svg blaze-svg>.
+<https://hackage.haskell.org/package/blaze-svg blaze-svg>.  While
+Cairo can export SVGs, it is a heavier dependency that may not be
+available everywhere.
+
+This works, but is a massive kludge-pile right now.
+
+Default stroke also does not really work right.
 
 -}
 
@@ -22,7 +28,7 @@ import Contextual hiding (scale)
 import Control.Monad (when)
 import Control.Monad.Free
 import Control.Monad.State
---import Data.Text
+import Data.Text.Lazy (Text)
 import Data.List (intercalate)
 import qualified System.Random as R
 
@@ -33,39 +39,44 @@ import qualified Data.Colour.RGBSpace.HSL as HSL
 import Text.Blaze.Svg11 ((!))
 import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Svg11.Attributes as A
-import Text.Blaze.Svg.Renderer.String (renderSvg)
+import qualified Text.Blaze.Svg.Renderer.Pretty as Pretty
+import Text.Blaze.Svg.Renderer.Text (renderSvg)
 
-render :: R.RandomGen r => r -- ^ Random generator
+render :: (Show a, R.RandomGen r) => r -- ^ Random generator
        -> Double -- ^ Minimum scale (below this, recursion terminates)
-       -> ColorRGBA -- ^ Starting color
+       -> Int -- ^ Width
+       -> Int -- ^ Height
        -> Node a -- ^ Scene to render
-       -> S.Svg
-render rg minScale color node = do
-  let --(x0,y0) = topLeft scene
-      --(x1,y1) = bottomRight scene
-      (x0,x1) = (0,1)
-      (y0,y1) = (0,1)
-      w = 400 * (x1 - x0)
-      h = 400 * (y1 - y0)
-      startCtxt = Context { ctxtScale = 1.0, ctxtFill = color, ctxtRand = rg }
-  -- Preamble
-  S.docTypeSvg ! A.version "1.1" !
-  -- Attributes for width & height:
-    (A.width $ S.toValue $ show w) !
-    (A.height $ S.toValue $ show h) !
-    -- Attribute for viewbox, e.g. viewbox "0 0 1 1":
-    (A.viewbox $ S.toValue $ intercalate " " $ map show [x0,y0,x1,y1]) $
-    do
-      -- Background:
-      -- S.rect ! (A.fill $ S.toValue $ SRGB.sRGB24show _)
-      -- Actual scene:
-      evalState (render' minScale node) startCtxt
+       -> Text
+render rg minScale w h node = renderSvg svg
+  where --(x0,y0) = topLeft scene
+        --(x1,y1) = bottomRight scene
+        (x0,x1) = (-0.5,1.0)
+        (y0,y1) = (-0.5,1.0)
+        -- TODO: Fix the above coordinates.  I have no idea why, but
+        -- only the above numbers line up properly with the Cairo
+        -- backend.
+        --
+        -- w = 400 * (x1 - x0)
+        -- h = 400 * (y1 - y0)
+        startCtxt = defaultContext rg
+        svg = do
+          -- Preamble
+          S.docTypeSvg ! A.version "1.1" !
+          -- Attributes for width & height:
+            (A.width $ S.toValue $ show w) !
+            (A.height $ S.toValue $ show h) !
+            -- Attribute for viewbox, e.g. viewbox "0 0 1 1":
+            (A.viewbox $ S.toValue $ intercalate " " $ map show [x0,y0,x1,y1]) $
+            do
+              -- Actual scene:
+              evalState (render' minScale node) startCtxt
 
 tempAttribs :: S.Attribute
 tempAttribs = mconcat [ --A.fill "#8080FF"
                       --, A.stroke "#404000"
                       --, A.strokeOpacity "0.50"
-                      A.strokeWidth "0.005"
+                      
                       --, A.fillOpacity "0.15"
                       ]
 
@@ -75,52 +86,55 @@ tempAttribs = mconcat [ --A.fill "#8080FF"
 -- internal to blaze, however.  I can use it, but it seems like I
 -- shouldn't have to.
 
-render' :: R.RandomGen a => Double -- ^ Minimum scale
+render' :: (Show b, R.RandomGen a) => Double -- ^ Minimum scale
         -> Node b -- ^ Starting node
         -> State (Context a) S.Svg
 render' minScale node = do
   ctxt <- get
-  {-let --xformAndRestore :: C.Render () -> Node b -> StateT (Context a) C.Render ()
-      xformAndRestore sub xform = do
-        -- Start Cairo context, apply transformation:
-        lift $ do C.save
-                  xform
-        -- Recurse (assuming our own context is correct):
-        render' minScale sub
-        -- Restore the Cairo context:
-        lift $ C.restore
-        -- Restore our context, but pass forward the RNG:
-        g <- ctxtRand <$> get
-        put $ ctxt { ctxtRand = g }-}
   case node of
     -- N.B. Only proceed if global scale is large enough
-    (Free (Scale sx sy c' c)) -> {- when (ctxtScale ctxt > minScale) $ -} do
-      --put $ ctxt { ctxtScale = ctxtScale ctxt * min sx sy }
-      --xformAndRestore c' $ C.scale sx sy
-      render' minScale c
+    (Free (Scale sx sy c' c)) -> do
+      put $ ctxt { ctxtScale = ctxtScale ctxt * min sx sy }
+      r' <- if (ctxtScale ctxt > minScale)
+            then render' minScale c'
+            else return mempty
+      put $ ctxt
+      r <- render' minScale c
+      return $ do
+        S.g r' ! (A.transform $ S.scale sx sy)
+        r
     (Free (Translate dx dy c' c)) -> do
-      --xformAndRestore c' $ C.translate dx dy
-      render' minScale c
+      r' <- render' minScale c'
+      r <- render' minScale c
+      return $ do
+        S.g r' ! (A.transform $ S.translate dx dy)
+        r
     (Free (Rotate a c' c)) -> do
-      --xformAndRestore c' $ C.rotate a
-      render' minScale c
+      let degrees = a * 180 / pi
+      r' <- render' minScale c'
+      r <- render' minScale c
+      return $ do
+        S.g r' ! (A.transform $ S.rotate degrees)
+        r
     (Free (Shear sx sy c' c)) -> do
-      --xformAndRestore c' $ C.transform $ CM.Matrix 1.0 sx sy 1.0 0.0 0.0
-      render' minScale c
+      error "Shearing is not implemented for blaze-svg."
     (Free (Square c)) -> do
       -- I don't think this is right either...
+      r <- render' minScale c
       return $ do
         (S.rect ! A.width "1" ! A.height "1" !
-          (A.transform $ S.translate (-0.5) (-0.5)) ! tempAttribs)
-        -- N.B. Translate (-0.5,-0.5) so it is centered at (0,0).
-      render' minScale c
+          (A.transform $ S.translate (-0.5) (-0.5)))
+          -- N.B. Translate (-0.5,-0.5) so it is centered at (0,0).
+        r
     (Free (Triangle c)) -> do
       let h = 1.0 / sqrt(3.0)
           ang n = 2 * n * pi / 3
           pt = \ang -> show (h * cos(ang)) ++ "," ++ show (h * sin(ang)) ++ " "
-          ptStr = pt (ang 0) ++ pt (ang 1) ++ pt (ang 2)      
-      return $ S.polygon ! (A.points $ S.toValue ptStr) ! tempAttribs
-      render' minScale c
+          ptStr = pt (ang 0) ++ pt (ang 1) ++ pt (ang 2)
+      r <- render' minScale c
+      return $ do
+        S.polygon ! (A.points $ S.toValue ptStr)
+        r
     (Free (Random p c1 c2 c)) -> do
       -- Get a random sample in [0,1]:
       let g = ctxtRand ctxt
@@ -130,6 +144,40 @@ render' minScale node = do
       render' minScale c
       -- N.B. That's interesting. This part remained completely
       -- independent of the backend.
+    (Free (Fill r g b a c' c)) -> do
+      let rgba = ctxtFill ctxt
+          rgba' = clampRGBA $ ColorRGBA { colorR = r
+                                        , colorG = g
+                                        , colorB = b
+                                        , colorA = a
+                                        }
+      put $ ctxt { ctxtFill = rgba' }
+      r' <- render' minScale c'
+      put $ ctxt
+      r1 <- render' minScale c
+      return $ do
+        let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB r g b
+        S.g r' ! (mappend (A.fill rgb) (A.fillOpacity $ S.toValue a))
+        r1
+    (Free (Stroke r g b a c' c)) -> do
+      let rgba = ctxtStroke ctxt
+          rgba' = clampRGBA $ ColorRGBA { colorR = r
+                                        , colorG = g
+                                        , colorB = b
+                                        , colorA = a
+                                        }
+      put $ ctxt { ctxtStroke = rgba' }
+      r' <- render' minScale c'
+      put $ ctxt
+      r1 <- render' minScale c
+      return $ do
+        let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB r g b
+        S.g r' ! mconcat [ A.stroke rgb
+                         , A.strokeOpacity $ S.toValue a
+                         , A.strokeWidth "0.005"
+                         -- TODO: Don't hard-code stroke width.
+                         ]
+        r1
     (Free (ShiftRGBA r g b a c' c)) -> do
       let rgba = ctxtFill ctxt
           rgba' = clampRGBA $ ColorRGBA { colorR = colorR rgba * r
@@ -138,8 +186,13 @@ render' minScale node = do
                                         , colorA = colorA rgba * a
                                         }
       put $ ctxt { ctxtFill = rgba' }
-      -- xformAndRestore c' $ setSourceRGBA' rgba'
-      render' minScale c
+      r' <- render' minScale c'
+      put $ ctxt
+      r1 <- render' minScale c
+      return $ do
+        let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB (colorR rgba') (colorG rgba') (colorB rgba')
+        S.g r' ! (mappend (A.fill rgb) (A.fillOpacity $ S.toValue $ colorA rgba'))
+        r1
     (Free (ShiftHSL dh sf lf af c' c)) -> do
       let rgba = ctxtFill ctxt
           -- Get HSL & transform:
@@ -154,16 +207,21 @@ render' minScale node = do
                             , colorA = clamp $ colorA rgba * af
                             }
       put $ ctxt { ctxtFill = rgba' }
-      -- xformAndRestore c' $ setSourceRGBA' rgba'
-      render' minScale c
+      r' <- render' minScale c'
+      put $ ctxt
+      r1 <- render' minScale c
+      return $ do
+        let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB (colorR rgba') (colorG rgba') (colorB rgba')
+        S.g r' ! (mappend (A.fill rgb) (A.fillOpacity $ S.toValue $ colorA rgba'))
+        r1
     (Free (Background r g b a c)) -> do
-      -- save & restore is probably overkill here, but this should
-      -- only be done once.
-      -- lift $ do
-      --   C.save
-      --  C.setSourceRGBA r g b a
-      --  C.paint
-      --  C.restore
-      render' minScale c
-    (Free _) -> error $ "Unsupported type in renderCairo"
+      r' <- render' minScale c
+      return $ do
+        let rgb = SRGB.sRGB r g b
+        S.rect !
+          (A.fill $ S.toValue $ SRGB.sRGB24show rgb) !
+          A.width "2" ! A.height "2" ! (A.transform $ S.translate (-0.5) (-0.5))
+          -- TODO: Get the size of this correct
+        r'
+    (Free t) -> error $ "Unsupported type in blaze-svg render, " ++ show t
     (Pure _) -> return mempty

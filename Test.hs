@@ -16,8 +16,11 @@ module Main where
 
 import Control.Monad (forM_)
 
+import qualified Data.Text.Lazy.IO as DT
+
 import Contextual
-import CairoBackend
+import qualified CairoBackend as CB
+import qualified BlazeBackend as BB
 import qualified Graphics.Rendering.Cairo as C 
 
 import qualified System.Random as R
@@ -48,8 +51,8 @@ notSierpinski_render px py = do
   -- Open a context (not strictly needed, I don't think, but it
   -- may help if we ever need to compose anything):
   C.save
-  preamble px py
-  renderCairo rg 1e-3 $ do
+  CB.preamble px py
+  CB.renderCairo rg 1e-3 $ do
     background 0.0 0.0 0.0 1.0
     stroke 0 0 0 0 $ fill 0.4 1.0 0.4 0.8 $ notSierpinski
   C.restore
@@ -76,8 +79,8 @@ sierpinski_render px py = do
   -- Open a context (not strictly needed, I don't think, but it
   -- may help if we ever need to compose anything):
   C.save
-  preamble px py
-  renderCairo rg 1e-3 $ do
+  CB.preamble px py
+  CB.renderCairo rg 1e-3 $ do
     background 0.0 0.0 0.0 1.0
     stroke 0 0 0 0 $ fill 1.0 0.3 0.3 0.2 $ sierpinski
   C.restore
@@ -98,8 +101,8 @@ testRandom_render :: Int -> Int -> Int -> C.Render ()
 testRandom_render px py seed = do
   let rg = R.mkStdGen seed
   C.save
-  preamble px py
-  renderCairo rg 1e-5 $ do
+  CB.preamble px py
+  CB.renderCairo rg 1e-5 $ do
     background 0.0 0.0 0.0 1.0
     fill 1.0 0.3 0.3 0.2 $ 
       scale 0.5 $ testRandom
@@ -114,8 +117,8 @@ testHSL_render :: Int -> Int -> C.Render ()
 testHSL_render px py = do
   let rg = R.mkStdGen 12345
   C.save
-  preamble px py
-  renderCairo rg 1e-5 $ do
+  CB.preamble px py
+  CB.renderCairo rg 1e-5 $ do
     background 0.0 0.0 0.0 1.0
     fill 0.1 0.1 1.0 0.3 $ translate (-0.25) (-0.25) $
       scale 0.35 $
@@ -124,19 +127,19 @@ testHSL_render px py = do
 
 testHSL2 :: Node ()
 testHSL2 = do
-  square
-  shiftHSL 6 0.98 0.98 1.07 $ rotate (pi/7) $ translate 0.4 (-0.05) $ scale2 0.9 0.7 $ testHSL2
+  let part = do
+        square
+        shiftHSL 6 0.98 0.98 1.07 $ rotate (pi/7) $ translate 0.4 (-0.05) $ scale2 0.9 0.7 $ part
+  background 0.98 0.98 0.98 1.0
+  stroke 0 0 0 1 $ fill 1.0 0.0 0.0 0.2 $ translate (-0.2) (-0.2) $
+    scale 0.5 $ part
 
 testHSL2_render :: Int -> Int -> C.Render ()
 testHSL2_render px py = do
   let rg = R.mkStdGen 12345
   C.save
-  preamble px py
-  renderCairo rg 1e-5 $ do
-    background 0.98 0.98 0.98 1.0
-    fill 1.0 0.0 0.0 0.2 $ translate (-0.2) (-0.2) $
-      scale 0.5 $
-      testHSL2
+  CB.preamble px py
+  CB.renderCairo rg 1e-5 $ testHSL2
   C.restore  
 
 test :: Node ()
@@ -172,6 +175,8 @@ main = do
   C.withSVGSurface "testHSL.svg"
     (fromIntegral px) (fromIntegral py) $
     \surf -> C.renderWith surf $ testHSL_render px py
+  DT.writeFile "testHSL2_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testHSL2
+   
   {-
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ sierpinski_render px py
