@@ -12,7 +12,9 @@ This is the backend for rendering a 'Node' grammar to an SVG via
 Cairo can export SVGs, it is a heavier dependency that may not be
 available everywhere.
 
-This works, but is a massive kludge-pile right now.
+This works, but is a massive kludge-pile right now.  It probably also
+generates fairly inefficient SVGs (in terms of needless numbers of
+groups and transforms).
 
 Default stroke also does not really work right.
 
@@ -25,7 +27,6 @@ module BlazeBackend where
 
 import Contextual hiding (scale)
 
-import Control.Monad (when)
 import Control.Monad.Free
 import Control.Monad.State
 import Data.Text.Lazy (Text)
@@ -39,7 +40,6 @@ import qualified Data.Colour.RGBSpace.HSL as HSL
 import Text.Blaze.Svg11 ((!))
 import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Svg11.Attributes as A
-import qualified Text.Blaze.Svg.Renderer.Pretty as Pretty
 import Text.Blaze.Svg.Renderer.Text (renderSvg)
 
 render :: (Show a, R.RandomGen r) => r -- ^ Random generator
@@ -49,17 +49,8 @@ render :: (Show a, R.RandomGen r) => r -- ^ Random generator
        -> Node a -- ^ Scene to render
        -> Text
 render rg minScale w h node = renderSvg svg
-  where --(x0,y0) = topLeft scene
-        --(x1,y1) = bottomRight scene
-        (x0,x1) = (-0.5,1.0)
-        (y0,y1) = (-0.5,1.0)
-        -- TODO: Fix the above coordinates.  I have no idea why, but
-        -- only the above numbers line up properly with the Cairo
-        -- backend.
-        --
-        -- w = 400 * (x1 - x0)
-        -- h = 400 * (y1 - y0)
-        startCtxt = defaultContext rg
+  where (x0, x1) = (-0.5, 0.5)
+        (y0, y1) = (-0.5, 0.5)
         svg = do
           -- Preamble
           S.docTypeSvg ! A.version "1.1" !
@@ -67,18 +58,12 @@ render rg minScale w h node = renderSvg svg
             (A.width $ S.toValue $ show w) !
             (A.height $ S.toValue $ show h) !
             -- Attribute for viewbox, e.g. viewbox "0 0 1 1":
-            (A.viewbox $ S.toValue $ intercalate " " $ map show [x0,y0,x1,y1]) $
-            do
-              -- Actual scene:
-              evalState (render' minScale node) startCtxt
-
-tempAttribs :: S.Attribute
-tempAttribs = mconcat [ --A.fill "#8080FF"
-                      --, A.stroke "#404000"
-                      --, A.strokeOpacity "0.50"
-                      
-                      --, A.fillOpacity "0.15"
-                      ]
+            (A.viewbox $ S.toValue $
+              -- Note x1-x0, y1-y0; viewbox's 3rd and 4th argument are
+              -- width and height, not x and y coordinates.
+               intercalate " " $ map show [x0, y0, x1 - x0, y1 - y0]) $
+            -- Actual scene:
+            evalState (render' minScale node) $ defaultContext rg
 
 -- Problem: I want to lift operations into S.Svg.  I can't really
 -- lift, except into a StateT.  S.Svg is MarkupM (), so StateT
@@ -119,12 +104,9 @@ render' minScale node = do
     (Free (Shear sx sy c' c)) -> do
       error "Shearing is not implemented for blaze-svg."
     (Free (Square c)) -> do
-      -- I don't think this is right either...
       r <- render' minScale c
       return $ do
-        (S.rect ! A.width "1" ! A.height "1" !
-          (A.transform $ S.translate (-0.5) (-0.5)))
-          -- N.B. Translate (-0.5,-0.5) so it is centered at (0,0).
+        S.rect ! A.width "1" ! A.height "1" ! A.x "-0.5" ! A.y "-0.5"
         r
     (Free (Triangle c)) -> do
       let h = 1.0 / sqrt(3.0)

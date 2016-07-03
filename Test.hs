@@ -41,7 +41,8 @@ notSierpinski = do
                 rotate (3*pi3) $ xform rep6
                 rotate (4*pi3) $ xform rep6
                 rotate (5*pi3) $ xform rep6
-  scale 0.5 rep6
+  background 0.0 0.0 0.0 1.0
+  stroke 0 0 0 0 $ fill 0.4 1.0 0.4 0.8 $ scale 0.5 rep6
 
 notSierpinski_render :: Int -> Int -> C.Render ()
 notSierpinski_render px py = do
@@ -52,9 +53,7 @@ notSierpinski_render px py = do
   -- may help if we ever need to compose anything):
   C.save
   CB.preamble px py
-  CB.renderCairo rg 1e-3 $ do
-    background 0.0 0.0 0.0 1.0
-    stroke 0 0 0 0 $ fill 0.4 1.0 0.4 0.8 $ notSierpinski
+  CB.renderCairo rg 1e-3 $ notSierpinski
   C.restore
 
 -- Not exactly Sierpinski, but an attempt at it
@@ -69,7 +68,8 @@ sierpinski = do
                 rotate (3*pi3) $ xform rep6
                 rotate (4*pi3) $ xform rep6
                 rotate (5*pi3) $ xform rep6
-  shiftRGBA 0.8 1.4 3.0 1.3 $ rep6
+  background 0.0 0.0 0.0 1.0
+  shiftRGBA 0.8 1.4 3.0 1.3 $ stroke 0 0 0 0 $ fill 1.0 0.3 0.3 0.2 $ rep6
 
 sierpinski_render :: Int -> Int -> C.Render ()
 sierpinski_render px py = do
@@ -80,9 +80,7 @@ sierpinski_render px py = do
   -- may help if we ever need to compose anything):
   C.save
   CB.preamble px py
-  CB.renderCairo rg 1e-3 $ do
-    background 0.0 0.0 0.0 1.0
-    stroke 0 0 0 0 $ fill 1.0 0.3 0.3 0.2 $ sierpinski
+  CB.renderCairo rg 1e-3 $ sierpinski
   C.restore
 
 testRandom :: Node ()
@@ -158,6 +156,24 @@ pattern dx dy angle = do
     square
     translate dx dy $ rotate angle $ shear 0.0 0.2 $ pattern dx dy angle
 
+-- | This is a render for the sake of checking bounds of backends; it
+-- contains a square which fills the entire canvas, and another one in
+-- front with a slight margin.
+testSquare :: Node ()
+testSquare = do
+  -- Red square fills entire canvas:
+  fill 1.0 0.0 0.0 0.5 square
+  -- White square, slightly smaller, sits in front:
+  scale 0.95 $ fill 1.0 1.0 1.0 0.5 square
+
+testSquare_render :: Int -> Int -> C.Render ()
+testSquare_render px py = do
+  let rg = R.mkStdGen 12345
+  C.save
+  CB.preamble px py
+  CB.renderCairo rg 1e-5 testSquare
+  C.restore
+
 main :: IO ()
 main = do
   let px = 1000
@@ -176,11 +192,18 @@ main = do
     (fromIntegral px) (fromIntegral py) $
     \surf -> C.renderWith surf $ testHSL_render px py
   DT.writeFile "testHSL2_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testHSL2
-   
-  {-
+
+  C.withImageSurface C.FormatARGB32 px py $ \surf -> do
+    C.renderWith surf $ testSquare_render px py
+    C.surfaceWriteToPNG surf ("testSquare.png")
+  DT.writeFile "testSquare_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testSquare
+  
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ sierpinski_render px py
     C.surfaceWriteToPNG surf ("sierpinski.png")
+  DT.writeFile "sierpinski_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-2 px py sierpinski
+
+  {-
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ notSierpinski_render px py
     C.surfaceWriteToPNG surf ("notSierpinski.png")
