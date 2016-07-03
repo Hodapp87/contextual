@@ -12,11 +12,13 @@ This is the backend for rendering a 'Node' grammar to an SVG via
 Cairo can export SVGs, it is a heavier dependency that may not be
 available everywhere.
 
-This works, but is a massive kludge-pile right now.  It probably also
-generates fairly inefficient SVGs (in terms of needless numbers of
-groups and transforms).
-
-Default stroke also does not really work right.
+This works, but is a massive kludge-pile right now - it needs some
+rework in the render function to work more cleanly with the Svg monad,
+and it needs to have much of its color-handling code overhauled (it
+was taken from an older version of this code that relied more heavily
+on Data.Colour, while the Cairo backend does not).  It generates
+fairly inefficient SVGs in terms of needless numbers of groups and
+transforms.  Default stroke also does not really work right.
 
 -}
 

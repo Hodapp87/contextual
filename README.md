@@ -17,11 +17,17 @@ as practice (at least, that's what I tell myself in hindsight):
 
 I'd highly recommend not looking at the code for any of those, since
 most of it's an ill-maintained mess and proof-of-concept.  I started
-this version in late 2013 when I first started learning Haskell, so
-the code is probably also atrocious at the moment.
+this version in late 2013 when I first started learning Haskell, but
+in this rewrite I threw away nearly all of the code from that attempt.
 
 The name *contextual* is something of a pun on Context Free.  It might
 change later when I'm feeling more imaginative.
+
+Right now, it has backends to render to Cairo and to
+[blaze-svg](https://hackage.haskell.org/package/blaze-svg).  Some
+minor differences are still being worked out, but for the most part
+their outputs should be identical.  I am planning on some more
+backends in the future.
 
 ## Examples
 
@@ -36,6 +42,11 @@ These are all generated from `Test.hs`.
 ![Not Sierpinski](notSierpinski.png)
 
 ## TODOs & Wish-list for Contextual
+
+### Documentation
+
+* Explain here how exactly Contextual works and how one might use it!
+* Explain the examples!
 
 ### Core
 
@@ -75,10 +86,15 @@ uses, which looks like it ties in with
 ### General Tidiness/Refactoring
 
 * Use namespaces already!
-* Typeclass for backends?
-* Perhaps factor out `Context` since much of it will be repeated in
-other backends, particularly anything that does a more immediate-mode
-drawing and lacks the `save`/`restore` of Cairo.
+* Make a typeclass for rendering backends?
+* Factor out the use of `Context` for rendering, since much of this
+code seems to be repeated.  I'm not sure what form it will take, but
+it should be possible to define a backend with fewer details, and let
+the rendering function take care of what amount of context needs to be
+passed around or managed (e.g. Cairo has state and `save`/`restore`
+and Canvas (IIRC) is much the same, whereas with SVG one simply nests
+transformations, and I'd imagine that OpenGL is more immediate-mode
+and requires that we compose the transformations).
 * Use of [Data.Reify](https://hackage.haskell.org/package/data-reify)
 to transform recursive structures, perhaps to backends that can
 express recursion natively or to a simplified expression
@@ -94,5 +110,5 @@ implicitly?  Should I be using it explicitly?
 
 * Support for animation
 * Extend support to 3D (same idea as in
-  [Structure Synth](http://blog.hvidtfeldts.net/index.php/category/structure-synth/)
-  from the amazing Syntopia blog).
+[Structure Synth](http://blog.hvidtfeldts.net/index.php/category/structure-synth/)
+from the amazing Syntopia blog).
