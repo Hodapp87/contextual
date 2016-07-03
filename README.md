@@ -47,8 +47,8 @@ throw off the aspect ratio - squares will be drawn as rectangles.
 primitives or average depth.
 * Stopping rendering on grammars that don't converge (e.g. limiting
 recursion depth or number of primitives)
-* Support for separate stroke and fill, and perhaps thickness
-* Bring the 'starting' color out of the backend-specific code
+* Support for stroke thickness (maybe), and support for adjusting both
+stroke and fill color separately (right now it's only fill)
 * Better colorspace than "plain" RGB.
 [colour](https://hackage.haskell.org/package/colour) can probably help
 here.  Alongside this: A saner way of specifying colors.
