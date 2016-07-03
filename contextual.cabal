@@ -24,6 +24,7 @@ executable contextual
   build-depends:       base
                      , cairo
                      , blaze-svg
+                     , blaze-markup
                      -- Needed (ish) for blaze:
                      , text
                      , colour
