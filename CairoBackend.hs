@@ -82,12 +82,13 @@ renderCairo' minScale node = do
       renderCairo' minScale c
     (Free (Triangle c)) -> do
       -- C.setLineWidth 5
-      let c60 = cos (pi/3) / 2
-          s60 = sin (pi/3) / 2
+      let h = 1.0 / sqrt(3.0)
+          x n = h * cos (2 * n * pi / 3)
+          y n = h * sin (2 * n * pi / 3)
       lift $ do
-        C.moveTo 0.5 0.0
-        C.lineTo (-c60) s60
-        C.lineTo (-c60) (-s60)
+        C.moveTo (x 0) (y 0)
+        C.lineTo (x 1) (y 1)
+        C.lineTo (x 2) (y 2)
         C.closePath
         setSourceRGBA' $ ctxtFill ctxt
         C.fill
