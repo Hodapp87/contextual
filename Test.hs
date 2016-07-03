@@ -61,7 +61,10 @@ sierpinski :: Node ()
 sierpinski = do
   let xform s = translate (1/3) 0 $ scale (1/3) $ rotate pi s
       pi3 = pi/3
-      rep6 = do triangle
+      -- I didn't realize until now that Cairo's triangles were the
+      -- wrong size, and I designed this around its coordinates:
+      fudge = scale $ sqrt (3/4)
+      rep6 = do fudge triangle
                 xform rep6
                 rotate (1*pi3) $ xform rep6
                 rotate (2*pi3) $ xform rep6
@@ -165,6 +168,7 @@ testSquare = do
   fill 1.0 0.0 0.0 0.5 square
   -- White square, slightly smaller, sits in front:
   scale 0.95 $ fill 1.0 1.0 1.0 0.5 square
+  fill 0.0 1.0 0.0 0.5 triangle
 
 testSquare_render :: Int -> Int -> C.Render ()
 testSquare_render px py = do
@@ -197,7 +201,7 @@ main = do
     C.renderWith surf $ testSquare_render px py
     C.surfaceWriteToPNG surf ("testSquare.png")
   DT.writeFile "testSquare_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testSquare
-  
+
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ sierpinski_render px py
     C.surfaceWriteToPNG surf ("sierpinski.png")
