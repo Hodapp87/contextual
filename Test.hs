@@ -117,15 +117,16 @@ quadtree :: Node ()
 quadtree = do
   let r' n = random 0.25 (return ()) n
       d = 0.5
+      f = 0.85
       squareR = do
         square
         -- 25% chance of recursing in each quadrant:
-        r' $ shiftHSL (-12.0) 1.2 0.8 1.2 $ scale 0.5 $ translate d d $ squareR
-        r' $ shiftHSL (11.0) 0.8 1.2 1.2 $ scale 0.5 $ translate d (-d) $ squareR
-        r' $ shiftHSL (-3.0) 1.2 1.2 1.2 $ scale 0.5 $ translate (-d) d $ squareR
-        r' $ shiftHSL (-6.0) 0.8 0.8 1.2 $ scale 0.5 $ translate (-d) (-d) $ squareR
+        r' $ shiftHSL (12.0) (1/f) f 1.0 $ scale 0.5 $ translate d d $ squareR
+        r' $ shiftHSL (-11.0) f (1/f) 1.0 $ scale 0.5 $ translate d (-d) $ squareR
+        r' $ shiftHSL (5.0) (1/f) (1/f) 1.0 $ scale 0.5 $ translate (-d) d $ squareR
+        r' $ shiftHSL (-8.0) f f 1.0 $ scale 0.5 $ translate (-d) (-d) $ squareR
   background 0 0 0 1
-  scale 0.95 $ stroke 0 0 0 1 $ fill 0.7 0.7 1.0 0.6 $ squareR
+  scale 0.95 $ stroke 0 0 0 1 $ fill 0.6 0.7 1.0 1.0 $ squareR
 
 -- | This is a render for the sake of checking bounds of backends; it
 -- contains a square which fills the entire canvas, and another one in
@@ -143,9 +144,9 @@ main = do
   let px = 4000
       py = 4000
 
-  DT.writeFile "quadtree_blaze.svg" $ BB.render (R.mkStdGen 23456) 1e-2 px py quadtree
+  DT.writeFile "quadtree_blaze.svg" $ BB.render (R.mkStdGen 12347) 1e-2 px py quadtree
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
-    C.renderWith surf $ CB.renderCairo (R.mkStdGen 23456) 5e-4 px py quadtree
+    C.renderWith surf $ CB.renderCairo (R.mkStdGen 12347) 1e-2 px py quadtree
     C.surfaceWriteToPNG surf ("quadtree.png")
 
   {-
