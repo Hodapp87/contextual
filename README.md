@@ -65,6 +65,9 @@ here.  Alongside this: A saner way of specifying colors.
 * Some optimization for the use of Cairo, e.g. if we are rendering a
 big scene to a raster image, then doing it in layers of N primitives
 may make sense to avoid building up huge scene graphs.
+* Randomness is deterministic - but contingent on recursion depth.
+This prevents one from doing a more detailed render based on the same
+random seed.  Is there a way around this?
 
 ### Other Backends
 
