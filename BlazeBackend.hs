@@ -18,7 +18,13 @@ and it needs to have much of its color-handling code overhauled (it
 was taken from an older version of this code that relied more heavily
 on Data.Colour, while the Cairo backend does not).  It generates
 fairly inefficient SVGs in terms of needless numbers of groups and
-transforms.  Default stroke also does not really work right.
+transforms.
+
+The problems I'm aware of are:
+
+* Default stroke also does not really work right.  Right now, it
+doesn't really matter because the default stroke is set to
+transparent, and actually setting the stroke works.
 
 -}
 

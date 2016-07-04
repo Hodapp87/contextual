@@ -76,6 +76,11 @@ renderCairo' minScale node = do
         C.rectangle (-0.5) (-0.5) 1 1
         setSourceRGBA' $ ctxtFill ctxt
         C.fill
+        -- TODO: All of the below is unnecessary if no stroke is
+        -- desired.  Right now, the only way to specify that no stroke
+        -- should occur is to give a stroke with alpha=0, and then we
+        -- still instruct Cairo to draw it anyway below.  A way to
+        -- just disable stroke might be nice.
         C.rectangle (-0.5) (-0.5) 1 1
         setSourceRGBA' $ ctxtStroke ctxt
         C.stroke

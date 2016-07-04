@@ -221,6 +221,9 @@ data Context a = Context { ctxtScale :: Double -- ^ Overall scale
 -- | Generate a default context, given a random number generator.
 defaultContext :: r -> Context r
 defaultContext rg = Context { ctxtScale = 1.0
-                            , ctxtFill = ColorRGBA 0.0 0.0 0.0 1.0
-                            , ctxtStroke = ColorRGBA 0.0 0.0 0.0 1.0
+                            , ctxtFill = ColorRGBA 0 0 0 1
+                            , ctxtStroke = ColorRGBA 0 0 0 0
+                              -- Note that changing the above stroke
+                              -- doesn't actually take effect in
+                              -- BlazeBackend yet.
                             , ctxtRand = rg }
