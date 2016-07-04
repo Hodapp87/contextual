@@ -85,6 +85,18 @@ that
 [ihaskell-charts](https://hackage.haskell.org/package/ihaskell-charts)
 uses, which looks like it ties in with
 [Chart-cairo](https://hackage.haskell.org/package/Chart-cairo).
+* [Years ago](https://hodapple.com/blag/posts/2011-08-29-context-free.html),
+I wrote, *"Translating something written in Context Free into another
+programming language would in most cases not be difficult at all - you
+need just a handful of 2D drawing primitives, a couple basic
+operations for color space and geometry, the ability to recurse (and
+to stop recursing when it’s pointless),"* but I never tested this idea
+explicitly.  Considering I'm already plenty familiar with generating C
+code from Haskell via my work with
+[Ivory](http://ivorylang.org/ivory-introduction.html), this is not
+especially farfetched.  Ivory or
+[inline-c](https://hackage.haskell.org/package/inline-c) might be good
+starting places.
 
 ### General Tidiness/Refactoring
 
