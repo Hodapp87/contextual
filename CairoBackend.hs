@@ -182,8 +182,9 @@ renderCairo rg minScale node = do
   -- TODO: Fix the types around here as they need not all be ()
 
 -- | Sets up a new environment for a given image size in pixels.  This
--- sets up the coordinate space to go from (-1,-1) to (1,1).  Calling
--- 'C.save' beforehand or 'C.restore' after is still up to you.
+-- sets up the coordinate space to go from (-1/2,-1/2) to (1/2,1/2).
+-- Calling 'C.save' beforehand or 'C.restore' after is still up to
+-- you.
 preamble :: Int -> Int -> C.Render ()
 preamble px py = do
   let px' = fromIntegral px

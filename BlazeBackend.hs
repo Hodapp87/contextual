@@ -209,8 +209,7 @@ render' minScale node = do
         let rgb = SRGB.sRGB r g b
         S.rect !
           (A.fill $ S.toValue $ SRGB.sRGB24show rgb) !
-          A.width "2" ! A.height "2" ! (A.transform $ S.translate (-0.5) (-0.5))
-          -- TODO: Get the size of this correct
+          A.x "-0.5" ! A.y "-0.5" ! A.width "1" ! A.height "1"
         r'
     (Free t) -> error $ "Unsupported type in blaze-svg render, " ++ show t
     (Pure _) -> return mempty
