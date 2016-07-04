@@ -87,7 +87,9 @@ render' minScale node = do
       r' <- if (ctxtScale ctxt > minScale)
             then render' minScale c'
             else return mempty
-      put $ ctxt
+      -- Restore our context, but pass forward the RNG:
+      g <- ctxtRand <$> get
+      put $ ctxt { ctxtRand = g }
       r <- render' minScale c
       return $ do
         S.g r' ! (A.transform $ S.scale sx sy)
@@ -131,8 +133,6 @@ render' minScale node = do
       return $ do
         r'
         r
-      -- N.B. That's interesting. This part remained completely
-      -- independent of the backend.
     (Free (Fill r g b a c' c)) -> do
       let rgba = ctxtFill ctxt
           rgba' = clampRGBA $ ColorRGBA { colorR = r
@@ -142,7 +142,9 @@ render' minScale node = do
                                         }
       put $ ctxt { ctxtFill = rgba' }
       r' <- render' minScale c'
-      put $ ctxt
+      -- Restore our context, but pass forward the RNG:
+      g' <- ctxtRand <$> get
+      put $ ctxt { ctxtRand = g' }
       r1 <- render' minScale c
       return $ do
         let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB r g b
@@ -157,7 +159,9 @@ render' minScale node = do
                                         }
       put $ ctxt { ctxtStroke = rgba' }
       r' <- render' minScale c'
-      put $ ctxt
+      -- Restore our context, but pass forward the RNG:
+      g' <- ctxtRand <$> get
+      put $ ctxt { ctxtRand = g' }
       r1 <- render' minScale c
       return $ do
         let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB r g b
@@ -176,7 +180,9 @@ render' minScale node = do
                                         }
       put $ ctxt { ctxtFill = rgba' }
       r' <- render' minScale c'
-      put $ ctxt
+      -- Restore our context, but pass forward the RNG:
+      g' <- ctxtRand <$> get
+      put $ ctxt { ctxtRand = g' }
       r1 <- render' minScale c
       return $ do
         let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB (colorR rgba') (colorG rgba') (colorB rgba')
@@ -197,7 +203,9 @@ render' minScale node = do
                             }
       put $ ctxt { ctxtFill = rgba' }
       r' <- render' minScale c'
-      put $ ctxt
+      -- Restore our context, but pass forward the RNG:
+      g' <- ctxtRand <$> get
+      put $ ctxt { ctxtRand = g' }
       r1 <- render' minScale c
       return $ do
         let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB (colorR rgba') (colorG rgba') (colorB rgba')
