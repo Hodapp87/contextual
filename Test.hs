@@ -46,18 +46,6 @@ notSierpinski = do
   -- TODO: Figure out why the above strokes show up in Blaze backend
   -- but not Cairo
 
-notSierpinski_render :: Int -> Int -> C.Render ()
-notSierpinski_render px py = do
-  -- TODO: Fix below (don't actually need random generator for
-  -- deterministic grammars):
-  let rg = R.mkStdGen 12345
-  -- Open a context (not strictly needed, I don't think, but it
-  -- may help if we ever need to compose anything):
-  C.save
-  CB.preamble px py
-  CB.renderCairo rg 1e-3 $ notSierpinski
-  C.restore
-
 -- Not exactly Sierpinski, but an attempt at it
 sierpinski :: Node ()
 sierpinski = do
@@ -76,57 +64,28 @@ sierpinski = do
   background 0.0 0.0 0.0 1.0
   shiftRGBA 0.8 1.4 3.0 1.3 $ stroke 0 0 0 0 $ fill 1.0 0.3 0.3 0.2 $ rep6
 
-sierpinski_render :: Int -> Int -> C.Render ()
-sierpinski_render px py = do
-  -- TODO: Fix below (don't actually need random generator for
-  -- deterministic grammars):
-  let rg = R.mkStdGen 12345
-  -- Open a context (not strictly needed, I don't think, but it
-  -- may help if we ever need to compose anything):
-  C.save
-  CB.preamble px py
-  CB.renderCairo rg 1e-3 $ sierpinski
-  C.restore
-
 testRandom :: Node ()
 testRandom = do
-  square
-  shiftRGBA 0.8 1.4 2.0 1.0 $ do
-    random 0.25
-      (translate 0.55 0 $ scale 0.75 $ rotate (pi/3) testRandom)
-      (translate 0 (-0.55) $ scale 0.75 $ rotate (-pi/3) testRandom)
-    random 0.125
-      (do translate (-0.5) 0 $ scale 0.5 $ testRandom
-          translate 0 (-0.5) $ scale 0.5 $ testRandom)
-      (return ())
-
-testRandom_render :: Int -> Int -> Int -> C.Render ()
-testRandom_render px py seed = do
-  let rg = R.mkStdGen seed
-  C.save
-  CB.preamble px py
-  CB.renderCairo rg 1e-5 $ do
-    background 0.0 0.0 0.0 1.0
-    fill 1.0 0.3 0.3 0.2 $ 
-      scale 0.5 $ testRandom
-  C.restore  
+  let r = do
+        square
+        shiftRGBA 0.8 1.4 2.0 1.0 $ do
+          random 0.25
+            (translate 0.55 0 $ scale 0.75 $ rotate (pi/3) r)
+            (translate 0 (-0.55) $ scale 0.75 $ rotate (-pi/3) r)
+          random 0.125
+            (do translate (-0.5) 0 $ scale 0.5 $ r
+                translate 0 (-0.5) $ scale 0.5 $ r)
+            (return ())
+  background 0.0 0.0 0.0 1.0
+  fill 1.0 0.3 0.3 0.2 $ scale 0.5 r
 
 testHSL :: Node ()
 testHSL = do
-  square
-  shiftHSL (-10) 1.1 1.04 1.07 $ rotate (pi/8) $ translate 0.5 (-0.15) $ scale 0.9 $ testHSL
-
-testHSL_render :: Int -> Int -> C.Render ()
-testHSL_render px py = do
-  let rg = R.mkStdGen 12345
-  C.save
-  CB.preamble px py
-  CB.renderCairo rg 1e-5 $ do
-    background 0.0 0.0 0.0 1.0
-    fill 0.1 0.1 1.0 0.3 $ translate (-0.25) (-0.25) $
-      scale 0.35 $
-      testHSL
-  C.restore  
+  let r = do
+        square
+        shiftHSL (-10) 1.1 1.04 1.07 $ rotate (pi/8) $ translate 0.5 (-0.15) $ scale 0.9 r
+  background 0.0 0.0 0.0 1.0
+  fill 0.1 0.1 1.0 0.3 $ translate (-0.25) (-0.25) $ scale 0.35 r
 
 testHSL2 :: Node ()
 testHSL2 = do
@@ -136,14 +95,6 @@ testHSL2 = do
   background 0.98 0.98 0.98 1.0
   stroke 0 0 0 1 $ fill 1.0 0.0 0.0 0.2 $ translate (-0.2) (-0.2) $
     scale 0.5 $ part
-
-testHSL2_render :: Int -> Int -> C.Render ()
-testHSL2_render px py = do
-  let rg = R.mkStdGen 12345
-  C.save
-  CB.preamble px py
-  CB.renderCairo rg 1e-5 $ testHSL2
-  C.restore  
 
 test :: Node ()
 test = do
@@ -161,6 +112,21 @@ pattern dx dy angle = do
     square
     translate dx dy $ rotate angle $ shear 0.0 0.2 $ pattern dx dy angle
 
+-- | Probabilistic subdivision of a square
+quadtree :: Node ()
+quadtree = do
+  let r' n = random 0.25 (return ()) n
+      d = 0.5
+      squareR = do
+        square
+        -- 25% chance of recursing in each quadrant:
+        r' $ shiftHSL (-12.0) 1.2 0.8 1.2 $ scale 0.5 $ translate d d $ squareR
+        r' $ shiftHSL (11.0) 0.8 1.2 1.2 $ scale 0.5 $ translate d (-d) $ squareR
+        r' $ shiftHSL (-3.0) 1.2 1.2 1.2 $ scale 0.5 $ translate (-d) d $ squareR
+        r' $ shiftHSL (-6.0) 0.8 0.8 1.2 $ scale 0.5 $ translate (-d) (-d) $ squareR
+  background 0 0 0 1
+  scale 0.95 $ stroke 0 0 0 1 $ fill 0.7 0.7 1.0 0.6 $ squareR
+
 -- | This is a render for the sake of checking bounds of backends; it
 -- contains a square which fills the entire canvas, and another one in
 -- front with a slight margin.
@@ -172,49 +138,47 @@ testSquare = do
   scale 0.95 $ fill 1.0 1.0 1.0 0.5 square
   fill 0.0 1.0 0.0 0.5 triangle
 
-testSquare_render :: Int -> Int -> C.Render ()
-testSquare_render px py = do
-  let rg = R.mkStdGen 12345
-  C.save
-  CB.preamble px py
-  CB.renderCairo rg 1e-5 testSquare
-  C.restore
-
 main :: IO ()
 main = do
-  let px = 1000
-      py = 1000
+  let px = 4000
+      py = 4000
+
+  DT.writeFile "quadtree_blaze.svg" $ BB.render (R.mkStdGen 23456) 1e-2 px py quadtree
+  C.withImageSurface C.FormatARGB32 px py $ \surf -> do
+    C.renderWith surf $ CB.renderCairo (R.mkStdGen 23456) 5e-4 px py quadtree
+    C.surfaceWriteToPNG surf ("quadtree.png")
+
+  {-
   forM_ [12345, 12346, 12347] $ \seed -> do
     C.withImageSurface C.FormatARGB32 px py $ \surf -> do
-      C.renderWith surf $ testRandom_render px py seed
+      C.renderWith surf $ CB.renderCairo (R.mkStdGen seed) 1e-5 px py testRandom
       C.surfaceWriteToPNG surf ("testRandom" ++ show seed ++ ".png")
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
-    C.renderWith surf $ testHSL_render px py
+    C.renderWith surf $ CB.renderCairo (R.mkStdGen 12345) 1e-5 px py testHSL
     C.surfaceWriteToPNG surf ("testHSL.png")
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
-    C.renderWith surf $ testHSL2_render px py
+    C.renderWith surf $ CB.renderCairo (R.mkStdGen 12345) 1e-5 px py testHSL2
     C.surfaceWriteToPNG surf ("testHSL2.png")
   C.withSVGSurface "testHSL.svg"
     (fromIntegral px) (fromIntegral py) $
-    \surf -> C.renderWith surf $ testHSL_render px py
+    \surf -> C.renderWith surf $ CB.renderCairo (R.mkStdGen 12345) 1e-5 px py testHSL
   DT.writeFile "testHSL2_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testHSL2
 
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
-    C.renderWith surf $ testSquare_render px py
+    C.renderWith surf $ CB.renderCairo (R.mkStdGen 12345) 1e-5 px py testSquare
     C.surfaceWriteToPNG surf ("testSquare.png")
   DT.writeFile "testSquare_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-2 px py testSquare
 
-  {-
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
-    C.renderWith surf $ sierpinski_render px py
+    C.renderWith surf $ CB.renderCairo (R.mkStdGen 12345) 1e-3 px py sierpinski
     C.surfaceWriteToPNG surf ("sierpinski.png")
   DT.writeFile "sierpinski_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-2 px py sierpinski
 
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
-    C.renderWith surf $ notSierpinski_render px py
+    C.renderWith surf $ CB.renderCairo (R.mkStdGen 12345) 1e-3 px py notSierpinski
     C.surfaceWriteToPNG surf ("notSierpinski.png")
   C.withSVGSurface "notSierpinski.svg"
     (fromIntegral px) (fromIntegral py) $
-    \surf -> C.renderWith surf $ notSierpinski_render px py
+    \surf -> C.renderWith surf $ CB.renderCairo (R.mkStdGen 12345) 1e-3 px py notSierpinski
   DT.writeFile "notSierpinski_blaze.svg" $ BB.render (R.mkStdGen 12345) 1e-2 px py notSierpinski
   -}

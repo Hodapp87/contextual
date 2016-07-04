@@ -173,10 +173,13 @@ renderCairo' minScale node = do
 renderCairo :: (Show a, R.RandomGen r) => r -- ^ Random generator
             -> Double -- ^ Minimum scale (below this, recursion
                       -- terminates)
+            -> Int -- ^ Width in pixels
+            -> Int -- ^ Height in pixels
             -> Node a -- ^ Scene to render
             -> C.Render ()
-renderCairo rg minScale node = do
+renderCairo rg minScale px py node = do
   let startCtxt = defaultContext rg
+  preamble px py
   execStateT (renderCairo' minScale node) startCtxt
   return ()
   -- TODO: Fix the types around here as they need not all be ()
