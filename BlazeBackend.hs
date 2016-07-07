@@ -34,6 +34,7 @@ transparent, and actually setting the stroke works.
 module BlazeBackend where
 
 import Contextual hiding (scale)
+import Utils
 
 import Control.Monad.Free
 import Control.Monad.State
@@ -42,8 +43,7 @@ import Data.List (intercalate)
 import qualified System.Random as R
 
 import Data.Colour
-import qualified Data.Colour.SRGB as SRGB
-import qualified Data.Colour.RGBSpace.HSL as HSL
+--import qualified Data.Colour.SRGB as SRGB
 
 import Text.Blaze as Blaze
 import Text.Blaze.Svg11 ((!))
@@ -139,44 +139,26 @@ render' minScale node = do
       return $ do
         r'
         r
-    (Free (Fill r g b a c' c)) -> do
-      let rgba = ctxtFill ctxt
-          rgba' = clampRGBA $ ColorRGBA { colorR = r
-                                        , colorG = g
-                                        , colorB = b
-                                        , colorA = a
-                                        }
-      put $ ctxt { ctxtFill = rgba' }
-      r' <- render' minScale c'
+    (Free (Set role color c n)) -> do
+      let ctxt' = case role of Stroke -> ctxt { ctxtStroke = color }
+                               Fill -> ctxt { ctxtFill = color }
+      put ctxt'
+      rc <- render' minScale c
       -- Restore our context, but pass forward the RNG:
       g' <- ctxtRand <$> get
       put $ ctxt { ctxtRand = g' }
-      r1 <- render' minScale c
+      rn <- render' minScale n
       return $ do
-        let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB r g b
-        S.g r' ! (mappend (A.fill rgb) (A.fillOpacity $ S.toValue a))
-        r1
-    (Free (Stroke r g b a c' c)) -> do
-      let rgba = ctxtStroke ctxt
-          rgba' = clampRGBA $ ColorRGBA { colorR = r
-                                        , colorG = g
-                                        , colorB = b
-                                        , colorA = a
-                                        }
-      put $ ctxt { ctxtStroke = rgba' }
-      r' <- render' minScale c'
-      -- Restore our context, but pass forward the RNG:
-      g' <- ctxtRand <$> get
-      put $ ctxt { ctxtRand = g' }
-      r1 <- render' minScale c
-      return $ do
-        let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB r g b
-        S.g r' ! mconcat [ A.stroke rgb
-                         , A.strokeOpacity $ S.toValue a
-                         , A.strokeWidth "0.005"
-                         -- TODO: Don't hard-code stroke width.
-                         ]
-        r1
+        let color' = S.toValue $ svgColor color
+            (_, _, _, alpha) = color
+        case role of
+          Stroke -> S.g rc ! (mappend (A.fill color') (A.fillOpacity $ S.toValue color))
+          Fill -> S.g rc ! mconcat [ A.stroke color'
+                                   , A.strokeOpacity $ S.toValue alpha
+                                   , A.strokeWidth "0.005"
+                                   -- TODO: Don't hard-code stroke width.
+                                   ]
+        rn
     (Free (ShiftRGBA r g b a c' c)) -> do
       let rgba = ctxtFill ctxt
           rgba' = clampRGBA $ ColorRGBA { colorR = colorR rgba * r
