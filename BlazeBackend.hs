@@ -154,7 +154,7 @@ render' minScale node = do
             (_, _, _, alpha) = color
             attrs = case role of
               Stroke -> [ A.fill color'
-                        , A.fillOpacity $ S.toValue color
+                        , A.fillOpacity $ S.toValue alpha
                         ]
               Fill -> [ A.stroke color'
                       , A.strokeOpacity $ S.toValue alpha
@@ -167,9 +167,9 @@ render' minScale node = do
       -- Get existing color:
       let color = case role of Stroke -> ctxtStroke ctxt
                                Fill -> ctxtFill ctxt
-          
-          ctxt' = case role of Stroke -> ctxt { ctxtStroke = color }
-                               Fill -> ctxt { ctxtFill = color }
+          color' = shiftColor view f color
+          ctxt' = case role of Stroke -> ctxt { ctxtStroke = color' }
+                               Fill -> ctxt { ctxtFill = color' }
       -- Render child nodes in a modified context:
       put ctxt'
       rc <- render' minScale c
@@ -182,7 +182,7 @@ render' minScale node = do
             (_, _, _, alpha) = color
             attrs = case role of
               Stroke -> [ A.fill color'
-                        , A.fillOpacity $ S.toValue color
+                        , A.fillOpacity $ S.toValue alpha
                         ]
               Fill -> [ A.stroke color'
                       , A.strokeOpacity $ S.toValue alpha
@@ -191,52 +191,14 @@ render' minScale node = do
                       -- TODO: Don't hard-code stroke width.
         S.g rc ! mconcat attrs
         rn
-    (Free (ShiftRGBA r g b a c' c)) -> do
-      let rgba = ctxtFill ctxt
-          rgba' = clampRGBA $ ColorRGBA { colorR = colorR rgba * r
-                                        , colorG = colorG rgba * g
-                                        , colorB = colorB rgba * b
-                                        , colorA = colorA rgba * a
-                                        }
-      put $ ctxt { ctxtFill = rgba' }
-      r' <- render' minScale c'
-      -- Restore our context, but pass forward the RNG:
-      g' <- ctxtRand <$> get
-      put $ ctxt { ctxtRand = g' }
-      r1 <- render' minScale c
-      return $ do
-        let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB (colorR rgba') (colorG rgba') (colorB rgba')
-        S.g r' ! (mappend (A.fill rgb) (A.fillOpacity $ S.toValue $ colorA rgba'))
-        r1
-    (Free (ShiftHSL dh sf lf af c' c)) -> do
-      let rgba = ctxtFill ctxt
-          -- Get HSL & transform:
-          (h,s,l) = HSL.hslView $
-            SRGB.RGB (colorR rgba) (colorG rgba) (colorB rgba)
-          (h', s', l') = (h + dh, clamp $ s * sf, clamp $ l * lf)
-          -- Get RGB, and transform alpha separately:
-          rgb' = HSL.hsl h' s' l'
-          rgba' = ColorRGBA { colorR = SRGB.channelRed   rgb'
-                            , colorG = SRGB.channelGreen rgb'
-                            , colorB = SRGB.channelBlue  rgb'
-                            , colorA = clamp $ colorA rgba * af
-                            }
-      put $ ctxt { ctxtFill = rgba' }
-      r' <- render' minScale c'
-      -- Restore our context, but pass forward the RNG:
-      g' <- ctxtRand <$> get
-      put $ ctxt { ctxtRand = g' }
-      r1 <- render' minScale c
-      return $ do
-        let rgb = S.toValue $ SRGB.sRGB24show $ SRGB.sRGB (colorR rgba') (colorG rgba') (colorB rgba')
-        S.g r' ! (mappend (A.fill rgb) (A.fillOpacity $ S.toValue $ colorA rgba'))
-        r1
-    (Free (Background r g b a c)) -> do
+        -- TODO: Most of above is identical with the 'Set' case; get
+        -- it put into one place
+    (Free (Background color@(_,_,_,alpha) c)) -> do
       r' <- render' minScale c
       return $ do
-        let rgb = SRGB.sRGB r g b
         S.rect !
-          (A.fill $ S.toValue $ SRGB.sRGB24show rgb) !
+          (A.fill $ S.toValue $ svgColor color) !
+          (A.fillOpacity $ S.toValue alpha) !
           A.x "-0.5" ! A.y "-0.5" ! A.width "1" ! A.height "1"
         r'
     (Free t) -> error $ "Unsupported type in blaze-svg render, " ++ show t

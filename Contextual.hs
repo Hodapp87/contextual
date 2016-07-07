@@ -106,7 +106,7 @@ random p c1 c2 = liftF $ Random p c1 c2 ()
 
 -- | Set a color to some color role.
 set :: ColorRole -- ^ The role of the given color
-    -> LABColor -- ^ The color to set
+    -> LABColor Double -- ^ The color to set
     -> Node () -> Node ()
 set role color c = liftF $ Set role color c ()
 
@@ -120,7 +120,7 @@ shift role view f c = liftF $ Shift role view f c ()
 -- | Set the background color, including transparency.  This should
 -- preferably be done early (if at all) - calling it later on or
 -- multiple times will give some implementation-dependent results.
-background :: LABColor -- ^ Color
+background :: LABColor Double -- ^ Color
            -> Node ()
 background c = liftF $ Background c ()
 

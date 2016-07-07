@@ -71,7 +71,7 @@ shiftColor LAB_b f (l, a, b, alpha) = (l, a, b + f, alpha)
 -- | Convert a 'LABColor', ignoring transparency, to an SVG color.
 -- This will be of a format like @#CD853F cielab(62.253188, 23.950124,
 -- 48.410653)@, which includes both the CIELAB color value and an sRGB
--- fallback.
+-- fallback (for which D65 whitepoint is assumed).
 svgColor ::
   (PrintfArg a, Ord a, Floating a, RealFrac a) => LABColor a -> String
 svgColor labColor = printf "%s cielab(%f, %f, %f)" rgbStr l a b
