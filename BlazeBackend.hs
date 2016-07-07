@@ -140,6 +140,7 @@ render' minScale node = do
         r'
         r
     (Free (Set role color c n)) -> do
+      -- Render child nodes in a modified context:
       let ctxt' = case role of Stroke -> ctxt { ctxtStroke = color }
                                Fill -> ctxt { ctxtFill = color }
       put ctxt'
@@ -151,13 +152,44 @@ render' minScale node = do
       return $ do
         let color' = S.toValue $ svgColor color
             (_, _, _, alpha) = color
-        case role of
-          Stroke -> S.g rc ! (mappend (A.fill color') (A.fillOpacity $ S.toValue color))
-          Fill -> S.g rc ! mconcat [ A.stroke color'
-                                   , A.strokeOpacity $ S.toValue alpha
-                                   , A.strokeWidth "0.005"
-                                   -- TODO: Don't hard-code stroke width.
-                                   ]
+            attrs = case role of
+              Stroke -> [ A.fill color'
+                        , A.fillOpacity $ S.toValue color
+                        ]
+              Fill -> [ A.stroke color'
+                      , A.strokeOpacity $ S.toValue alpha
+                      , A.strokeWidth "0.005"
+                      ]
+                      -- TODO: Don't hard-code stroke width.
+        S.g rc ! mconcat attrs
+        rn
+    (Free (Shift role view f c n)) -> do
+      -- Get existing color:
+      let color = case role of Stroke -> ctxtStroke ctxt
+                               Fill -> ctxtFill ctxt
+          
+          ctxt' = case role of Stroke -> ctxt { ctxtStroke = color }
+                               Fill -> ctxt { ctxtFill = color }
+      -- Render child nodes in a modified context:
+      put ctxt'
+      rc <- render' minScale c
+      -- Restore our context, but pass forward the RNG:
+      g' <- ctxtRand <$> get
+      put $ ctxt { ctxtRand = g' }
+      rn <- render' minScale n
+      return $ do
+        let color' = S.toValue $ svgColor color
+            (_, _, _, alpha) = color
+            attrs = case role of
+              Stroke -> [ A.fill color'
+                        , A.fillOpacity $ S.toValue color
+                        ]
+              Fill -> [ A.stroke color'
+                      , A.strokeOpacity $ S.toValue alpha
+                      , A.strokeWidth "0.005"
+                      ]
+                      -- TODO: Don't hard-code stroke width.
+        S.g rc ! mconcat attrs
         rn
     (Free (ShiftRGBA r g b a c' c)) -> do
       let rgba = ctxtFill ctxt

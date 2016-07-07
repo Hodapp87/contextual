@@ -26,6 +26,8 @@ contextual_clojure> for a Clojure one.
 
 module Contextual where
 
+import Utils
+
 import Control.Monad.Free
 import qualified Data.Colour.CIE as CIE
 
@@ -35,30 +37,6 @@ import qualified Data.Colour.CIE as CIE
 data ColorRole = Stroke -- ^ The stroke at a shape's boundary
                | Fill -- ^ A shape's interior
   deriving (Show)
-
--- | This is the aspect of the color that shifted, or otherwise
--- modified.  All operations refer to CIELAB or CIELCh colorspace, and
--- so terms like hue, saturation, and brightness do not map exactly to
--- HSV or HSL colorspace.
-data ColorView = Lum -- ^ Luminance (brightness), that is, the /L/
-                 -- from CIELAB and CIELCh
-               | Chrom -- ^ Chrome (relative saturation or purity);
-                       -- more explicitly, the /C*/ from CIELCh.
-               | Alpha -- ^ Alpha (transparency)
-               | Hue -- ^ Hue angle; more explicitly, the /h°/ from
-                     -- CIELCh.
-               | LAB_a -- ^ @a*@ opponent color axis from CIELAB
-                       -- (loosely, positive is redness and negative
-                       -- is yellowness)
-               | LAB_b -- ^ @b*@ opponent color axis from CIELAB
-                       -- (loosely, positive is yellowness and
-                       -- negative is blueness)
-  deriving (Show)
-
--- | What we use internally for colors: a tuple with (\L*\, \a*\,
--- \b*\, alpha); first three parts from CIELAB colorspace, last part
--- just normal transparency.
-type LABColor = (Double, Double, Double, Double)
 
 -- | Transformations, primitives, and other commands used (internally)
 -- for specifying a grammar.
@@ -74,9 +52,9 @@ data NodeF x = Square x
              | Rotate Double (Node x) x
              | Shear Double Double (Node x) x
              | Random Double (Node x) (Node x) x
-             | Set ColorRole LABColor (Node x) x
+             | Set ColorRole (LABColor Double) (Node x) x
              | Shift ColorRole ColorView Double (Node x) x
-             | Background LABColor x
+             | Background (LABColor Double) x
              deriving (Show, Functor)
 
 -- | Main type for building a grammar.  Various smart constructors are
@@ -211,8 +189,8 @@ clampRGBA rgba = ColorRGBA { colorR = clamp $ colorR rgba
 -- | Rendering context
 data Context a =
   Context { ctxtScale :: Double -- ^ Overall scale
-          , ctxtFill :: LABColor -- ^ Current fill color
-          , ctxtStroke :: LABColor -- ^ Current stroke color
+          , ctxtFill :: LABColor Double -- ^ Current fill color
+          , ctxtStroke :: LABColor Double -- ^ Current stroke color
           , ctxtRand :: a -- ^ RandomGen
           }
 
@@ -225,3 +203,4 @@ defaultContext rg = Context { ctxtScale = 1.0
                               -- doesn't actually take effect in
                               -- BlazeBackend yet.
                             , ctxtRand = rg }
+
