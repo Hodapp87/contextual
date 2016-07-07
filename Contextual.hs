@@ -27,8 +27,45 @@ contextual_clojure> for a Clojure one.
 module Contextual where
 
 import Control.Monad.Free
-import qualified Data.Colour.SRGB as SRGB
+import qualified Data.Colour.CIE as CIE
 
+-- | This is the set of roles that a color might have.  Most
+-- transformations that modify a color will do so based on one of
+-- these roles.
+data ColorRole = Stroke -- ^ The stroke at a shape's boundary
+               | Fill -- ^ A shape's interior
+  deriving (Show)
+
+-- | This is the aspect of the color that shifted, or otherwise
+-- modified.  All operations refer to CIELAB or CIELCh colorspace, and
+-- so terms like hue, saturation, and brightness do not map exactly to
+-- HSV or HSL colorspace.
+data ColorView = Lum -- ^ Luminance (brightness), that is, the /L/
+                 -- from CIELAB and CIELCh
+               | Chrom -- ^ Chrome (relative saturation or purity);
+                       -- more explicitly, the /C*/ from CIELCh.
+               | Alpha -- ^ Alpha (transparency)
+               | Hue -- ^ Hue angle; more explicitly, the /h°/ from
+                     -- CIELCh.
+               | LAB_a -- ^ @a*@ opponent color axis from CIELAB
+                       -- (loosely, positive is redness and negative
+                       -- is yellowness)
+               | LAB_b -- ^ @b*@ opponent color axis from CIELAB
+                       -- (loosely, positive is yellowness and
+                       -- negative is blueness)
+  deriving (Show)
+
+-- | What we use internally for colors: a tuple with (\L*\, \a*\,
+-- \b*\, alpha); first three parts from CIELAB colorspace, last part
+-- just normal transparency.
+type LABColor = (Double, Double, Double, Double)
+
+-- | Transformations, primitives, and other commands used (internally)
+-- for specifying a grammar.
+-- 
+-- Backends should pattern-match on these constructors, but users
+-- creating a grammar should do so via the 'Node' type and its smart
+-- constructors elsewhere in this file.
 data NodeF x = Square x
              | Triangle x
              | Line x
@@ -37,13 +74,13 @@ data NodeF x = Square x
              | Rotate Double (Node x) x
              | Shear Double Double (Node x) x
              | Random Double (Node x) (Node x) x
-             | Stroke Double Double Double Double (Node x) x
-             | Fill Double Double Double Double (Node x) x
-             | ShiftRGBA Double Double Double Double (Node x) x
-             | ShiftHSL Double Double Double Double (Node x) x
-             | Background Double Double Double Double x
-             deriving (Show, Functor);
+             | Set ColorRole LABColor (Node x) x
+             | Shift ColorRole ColorView Double (Node x) x
+             | Background LABColor x
+             deriving (Show, Functor)
 
+-- | Main type for building a grammar.  Various smart constructors are
+-- below.
 type Node = Free NodeF
 
 -- | Square of sidelength 1, center (0,0), axis-aligned
@@ -51,7 +88,7 @@ square :: Node ()
 square = liftF $ Square ()
 
 -- | Triangle of sidelength 1, center (0,0), one vertex lying along
--- positive X.
+-- positive /X/.
 triangle :: Node ()
 triangle = liftF $ Triangle ()
 
@@ -89,59 +126,25 @@ shear sx sy c = liftF $ Shear sx sy c ()
 random :: Double -> Node () -> Node () -> Node ()
 random p c1 c2 = liftF $ Random p c1 c2 ()
 
--- | Set stroke color (ignoring any 'inherited' stroke color, regardless
--- of alpha) on the child 'Node'.
-stroke :: Double -- ^ Red
-     -> Double -- ^ Green
-     -> Double -- ^ Blue
-     -> Double -- ^ Alpha (transparency)
-     -> Node () -> Node ()
-stroke r g b a c = liftF $ Stroke r g b a c ()
+-- | Set a color to some color role.
+set :: ColorRole -- ^ The role of the given color
+    -> LABColor -- ^ The color to set
+    -> Node () -> Node ()
+set role color c = liftF $ Set role color c ()
 
--- TODO: If stroke and fill are that close perhaps I can just make one
--- 'set color' constructor/transform, and make stroke/fill a parameter.
+-- | Shift some part of a color in some role.
+shift :: ColorRole
+      -> ColorView
+      -> Double
+      -> Node () -> Node ()
+shift role view f c = liftF $ Shift role view f c ()
 
--- | Set fill color (ignoring any 'inherited' fill color, regardless
--- of alpha) on the child 'Node'.
-fill :: Double -- ^ Red
-     -> Double -- ^ Green
-     -> Double -- ^ Blue
-     -> Double -- ^ Alpha (transparency)
-     -> Node () -> Node ()
-fill r g b a c = liftF $ Fill r g b a c ()
-
--- | Shift the fill color by the given factors - which apply to red,
--- green, blue, and alpha, respectively.  A value of 1 leaves that
--- channel unchanged.
-shiftRGBA :: Double -- ^ Red factor
-          -> Double -- ^ Green factor
-          -> Double -- ^ Blue factor
-          -> Double -- ^ Alpha (transparency) factor
-          -> Node () -> Node ()
-shiftRGBA r g b a c = liftF $ ShiftRGBA r g b a c ()
-
--- | Shift the fill color in HSL (hue, saturation, lightness) space.
--- The first parameter is a delta, in degrees, added to hue (thus a
--- value of 0 is neutral).  The remaining parameters are factors
--- applied to saturation, value, and alpha, respectively (and as with
--- 'shiftRGBA' a value of 1 is neutral).
-shiftHSL :: Double -- ^ Hue delta (degrees)
-         -> Double -- ^ Saturation factor
-         -> Double -- ^ Lightness factor
-         -> Double -- ^ Alpha (transparency) factor
-         -> Node () -> Node ()
-shiftHSL dh s l a c = liftF $ ShiftHSL dh s l a c ()
-
--- | Set the background color, with all components in range [0-1].
--- This should preferably be done early (if at all) - calling it later
--- on or multiple times will give some implementation-dependent
--- results.
-background :: Double -- ^ Red
-           -> Double -- ^ Green
-           -> Double -- ^ Black
-           -> Double -- ^ Alpha (transparency)
+-- | Set the background color, including transparency.  This should
+-- preferably be done early (if at all) - calling it later on or
+-- multiple times will give some implementation-dependent results.
+background :: LABColor -- ^ Color
            -> Node ()
-background r g b a = liftF $ Background r g b a ()
+background c = liftF $ Background c ()
 
 -- | Pretty-print a 'Node'
 showNode :: (Show a) => Node a -> [String]
@@ -153,38 +156,30 @@ showNode (Free (Scale sx sy c' c)) =
   ("scale " ++ show sx ++ "," ++ show sy ++ " {") : rest ++ ["}"] ++ showNode c
   where rest = indent "  " $ showNode c'
 showNode (Free (Translate dx dy c' c)) =
-  ("translate " ++ show dx ++ "," ++ show dy ++ " {") : rest ++ ["}"] ++ showNode c
+  ("translate " ++ show dx ++ "," ++ show dy ++ " {") : rest ++ ["}"] ++
+  showNode c
   where rest = indent "  " $ showNode c'
 showNode (Free (Rotate a c' c)) =
   ("rotate " ++ show a ++ " {") : rest ++ ["}"] ++ showNode c
   where rest = indent "  " $ showNode c'
 showNode (Free (Shear sx sy c' c)) =
-  ("shear " ++ show sx ++ "," ++ show sy ++ " {") : rest ++ ["}"] ++ showNode c
+  ("shear " ++ show sx ++ "," ++ show sy ++ " {") : rest ++
+  ["}"] ++ showNode c
   where rest = indent "  " $ showNode c'
-showNode (Free (ShiftRGBA r g b a c' c)) =
-  ("shiftRGBA " ++ show r ++ "," ++ show g ++ "," ++ show b ++
-   "," ++ show a ++ " {") : rest ++ ["}"] ++ showNode c
-  where rest = indent "  " $ showNode c'
-showNode (Free (ShiftHSL dh s l a c' c)) =
-  ("shiftHSL " ++ show dh  ++ "," ++ show s ++ "," ++ show l ++
-   "," ++ show a ++ " {") : rest ++ ["}"] ++ showNode c
-  where rest = indent "  " $ showNode c'
-  -- TODO: Remove some of the boilerplate for all the transformations above
-showNode (Free (Fill r g b a c' c)) =
-  ("fill " ++ show r ++ "," ++ show g ++ "," ++ show b ++
-   "," ++ show a ++ " {") : rest ++ ["}"] ++ showNode c
-  where rest = indent "  " $ showNode c'
-showNode (Free (Stroke r g b a c' c)) =
-  ("stroke " ++ show r ++ "," ++ show g ++ "," ++ show b ++
-   "," ++ show a ++ " {") : rest ++ ["}"] ++ showNode c
-  where rest = indent "  " $ showNode c'
+showNode (Free (Set role color c n)) =
+  ("set " ++ show role ++ " " ++ show color ++ " {") : rest ++
+  ["}"] ++ showNode n
+  where rest = indent "  " $ showNode c
+showNode (Free (Shift role view f c n)) =
+  ("shift " ++ show role ++ " " ++ show view ++ " " ++ show f ++ " {") : rest
+  ++ ["}"] ++ showNode n
+  where rest = indent "  " $ showNode c
 showNode (Free (Random p c1 c2 c)) =
   ("random p=" ++ show p ++ " {") : (indent "  " $ showNode c1) ++
   ("}, p=" ++ show (1-p) ++ " {") : (indent "  " $ showNode c2) ++ ["}"] ++
   showNode c
-showNode (Free (Background r g b a c)) =
-  ("background " ++ show r ++ "," ++ show g ++ "," ++ show b ++ "," ++ show a) :
-  showNode c
+showNode (Free (Background color alpha n)) =
+  ("background " ++ show color ++ "," ++ show alpha) : showNode n
 showNode (Free t) = error $ "Unknown type, " ++ show t
 
 indent :: String -> [String] -> [String]
@@ -193,6 +188,7 @@ indent pfx = map (pfx ++)
 clamp :: (Ord f, Num f) => f -> f
 clamp v = if v < 0 then 0 else if v > 1 then 1 else v
 
+{-
 -- | Simple color type, probably going away at some point.  All
 -- components should be in the range [0,1].
 data ColorRGBA = ColorRGBA { colorR :: Double
@@ -210,19 +206,21 @@ clampRGBA rgba = ColorRGBA { colorR = clamp $ colorR rgba
                            , colorB = clamp $ colorB rgba
                            , colorA = clamp $ colorA rgba
                            }
+-}
 
 -- | Rendering context
-data Context a = Context { ctxtScale :: Double -- ^ Overall scale
-                         , ctxtFill :: ColorRGBA -- ^ Current fill color
-                         , ctxtStroke :: ColorRGBA -- ^ Current stroke color
-                         , ctxtRand :: a -- ^ RandomGen
-                         }
+data Context a =
+  Context { ctxtScale :: Double -- ^ Overall scale
+          , ctxtFill :: LABColor -- ^ Current fill color
+          , ctxtStroke :: LABColor -- ^ Current stroke color
+          , ctxtRand :: a -- ^ RandomGen
+          }
 
 -- | Generate a default context, given a random number generator.
 defaultContext :: r -> Context r
 defaultContext rg = Context { ctxtScale = 1.0
-                            , ctxtFill = ColorRGBA 0 0 0 1
-                            , ctxtStroke = ColorRGBA 0 0 0 0
+                            , ctxtFill = (100, 0, 0, 1)
+                            , ctxtStroke = (0, 0, 0, 0)
                               -- Note that changing the above stroke
                               -- doesn't actually take effect in
                               -- BlazeBackend yet.
