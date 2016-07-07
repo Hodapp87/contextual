@@ -178,8 +178,8 @@ showNode (Free (Random p c1 c2 c)) =
   ("random p=" ++ show p ++ " {") : (indent "  " $ showNode c1) ++
   ("}, p=" ++ show (1-p) ++ " {") : (indent "  " $ showNode c2) ++ ["}"] ++
   showNode c
-showNode (Free (Background color alpha n)) =
-  ("background " ++ show color ++ "," ++ show alpha) : showNode n
+showNode (Free (Background color n)) =
+  ("background " ++ show color) : showNode n
 showNode (Free t) = error $ "Unknown type, " ++ show t
 
 indent :: String -> [String] -> [String]
