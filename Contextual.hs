@@ -203,4 +203,3 @@ defaultContext rg = Context { ctxtScale = 1.0
                               -- doesn't actually take effect in
                               -- BlazeBackend yet.
                             , ctxtRand = rg }
-

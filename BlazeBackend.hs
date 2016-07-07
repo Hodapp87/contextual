@@ -153,13 +153,13 @@ render' minScale node = do
         let color' = S.toValue $ svgColor color
             (_, _, _, alpha) = color
             attrs = case role of
-              Stroke -> [ A.fill color'
-                        , A.fillOpacity $ S.toValue alpha
-                        ]
-              Fill -> [ A.stroke color'
-                      , A.strokeOpacity $ S.toValue alpha
-                      , A.strokeWidth "0.005"
+              Fill -> [ A.fill color'
+                      , A.fillOpacity $ S.toValue alpha
                       ]
+              Stroke -> [ A.stroke color'
+                        , A.strokeOpacity $ S.toValue alpha
+                        , A.strokeWidth "0.005"
+                        ]
                       -- TODO: Don't hard-code stroke width.
         S.g rc ! mconcat attrs
         rn
@@ -181,13 +181,13 @@ render' minScale node = do
         let color' = S.toValue $ svgColor color
             (_, _, _, alpha) = color
             attrs = case role of
-              Stroke -> [ A.fill color'
-                        , A.fillOpacity $ S.toValue alpha
-                        ]
-              Fill -> [ A.stroke color'
-                      , A.strokeOpacity $ S.toValue alpha
-                      , A.strokeWidth "0.005"
+              Fill -> [ A.fill color'
+                      , A.fillOpacity $ S.toValue alpha
                       ]
+              Stroke -> [ A.stroke color'
+                        , A.strokeOpacity $ S.toValue alpha
+                        , A.strokeWidth "0.005"
+                        ]
                       -- TODO: Don't hard-code stroke width.
         S.g rc ! mconcat attrs
         rn
