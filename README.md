@@ -61,7 +61,12 @@ recursion depth or number of primitives)
 stroke and fill color separately (right now it's only fill)
 * Better colorspace than "plain" RGB.
 [colour](https://hackage.haskell.org/package/colour) can probably help
-here.  Alongside this: A saner way of specifying colors.
+here.  Alongside this: A saner way of specifying colors.  (Note that
+while SVG supports
+[ICC profiles](https://www.w3.org/TR/SVGColor12/#icc-colors) and LAB,
+the documentation on colour specifically calls out Cairo integration
+as being problematic because its colors are in a device-dependent
+color space.)
 * Some optimization for the use of Cairo, e.g. if we are rendering a
 big scene to a raster image, then doing it in layers of N primitives
 may make sense to avoid building up huge scene graphs.
@@ -96,7 +101,11 @@ code from Haskell via my work with
 [Ivory](http://ivorylang.org/ivory-introduction.html), this is not
 especially farfetched.  Ivory or
 [inline-c](https://hackage.haskell.org/package/inline-c) might be good
-starting places.
+starting places - or [Fay](https://github.com/faylang/fay) or
+[Haste](http://haste-lang.org/) perhaps, if I want to target
+JavaScript.  However, this may not have much point without something
+else to parametrize it over, e.g. a random seed or a time value in
+order to animate.
 
 ### General Tidiness/Refactoring
 
