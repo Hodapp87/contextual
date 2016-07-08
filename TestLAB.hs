@@ -21,6 +21,7 @@ import Control.Monad (forM_)
 import qualified Data.Text.Lazy.IO as DT
 
 import Contextual
+import Utils
 -- import qualified CairoBackend as CB
 import qualified BlazeBackend as BB
 import qualified Graphics.Rendering.Cairo as C 
@@ -31,18 +32,34 @@ testHSL :: Node ()
 testHSL = do
   let r = do
         square
-        shiftHSL (-10) 1.1 1.04 1.07 $ rotate (pi/8) $ translate 0.5 (-0.15) $ scale 0.9 r
-  background 0.0 0.0 0.0 1.0
-  fill 0.1 0.1 1.0 0.3 $ translate (-0.25) (-0.25) $ scale 0.35 r
+        shift Fill Hue (-0.3) $
+          shift Fill Chrom (-6) $
+          shift Fill Lum 5 $
+          shift Fill Alpha 0.07 $
+          rotate (pi/8) $
+          translate 0.5 (-0.15) $
+          scale 0.9 r
+  background (0, 0, 0, 1)
+  set Fill (50, 0, -200, 0.3) $
+    translate (-0.25) (-0.25) $
+    scale 0.35 r
 
 testHSL2 :: Node ()
 testHSL2 = do
   let part = do
         square
-        shiftHSL 6 0.98 0.98 1.07 $ rotate (pi/7) $ translate 0.4 (-0.05) $ scale2 0.9 0.7 $ part
-  background 0.98 0.98 0.98 1.0
-  stroke 0 0 0 1 $ fill 1.0 0.0 0.0 0.2 $ translate (-0.2) (-0.2) $
-    scale 0.5 $ part
+        shift Fill Hue 0.1 $
+          shift Fill Chrom (-2) $
+          shift Fill Lum (-2) $
+          shift Fill Alpha 0.07 $
+          rotate (pi/7) $
+          translate 0.4 (-0.05) $
+          scale2 0.9 0.7 part
+  background (98, 0, 0, 1)
+  set Stroke (0, 0, 0, 1) $
+    set Fill (100, 200, 0, 0.2) $
+    translate (-0.2) (-0.2) $
+    scale 0.5 part
 
 test :: Node ()
 test = do
@@ -66,7 +83,7 @@ pattern dx dy angle = do
 testSquare :: Node ()
 testSquare = do
   -- Red square fills entire canvas:
-  fill 1.0 0.0 0.0 0.5 square
+  set Fill (100, 200, 200, 0.5) square
   -- White square, slightly smaller, sits in front:
   scale 0.95 $ set Fill (100, 0, 0, 0.5) square
   set Fill (100, 0, 0, 0.5) triangle

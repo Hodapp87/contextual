@@ -16,9 +16,12 @@ extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
 executable contextual
-  main-is:             Test.hs
+  main-is:             TestLAB.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  other-modules:       Contextual, CairoBackend, BlazeBackend
+  other-modules:       Contextual
+                     , BlazeBackend
+                     -- Disabled for LAB overhaul:
+                     --, CairoBackend
   -- Below is needed only for blaze-svg:
   other-extensions:    OverloadedStrings
   build-depends:       base
