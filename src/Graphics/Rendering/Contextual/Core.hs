@@ -117,6 +117,14 @@ shift :: ColorRole
       -> Node () -> Node ()
 shift role view f c = liftF $ Shift role view f c ()
 
+-- | Basically 'shift', but shorter for expressing multiple
+-- transformations on the same role.  Transformations @[(v1,f1),
+-- (v2,f2), ...]@ go in the same order as if expanded as @shift r v1
+-- f1 $ shift r v2 f2 $ ...@.
+shift' :: ColorRole -> [(ColorView, Double)] -> Node () -> Node ()
+shift' _ [] = id
+shift' r ((v,f):l) = shift r v f . shift' r l
+
 -- | Set the background color, including transparency.  This should
 -- preferably be done early (if at all) - calling it later on or
 -- multiple times will give some implementation-dependent results.
@@ -165,26 +173,6 @@ indent pfx = map (pfx ++)
 
 clamp :: (Ord f, Num f) => f -> f
 clamp v = if v < 0 then 0 else if v > 1 then 1 else v
-
-{-
--- | Simple color type, probably going away at some point.  All
--- components should be in the range [0,1].
-data ColorRGBA = ColorRGBA { colorR :: Double
-                           , colorG :: Double
-                           , colorB :: Double
-                           , colorA :: Double
-                           } deriving Show
-
-
-
--- | Clamp a 'ColorRGBA' so all colors are within [0,1].
-clampRGBA :: ColorRGBA -> ColorRGBA
-clampRGBA rgba = ColorRGBA { colorR = clamp $ colorR rgba
-                           , colorG = clamp $ colorG rgba
-                           , colorB = clamp $ colorB rgba
-                           , colorA = clamp $ colorA rgba
-                           }
--}
 
 -- | Rendering context
 data Context a =

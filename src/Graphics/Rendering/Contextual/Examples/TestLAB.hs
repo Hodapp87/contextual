@@ -62,6 +62,28 @@ testHSL2 = do
     translate (-0.2) (-0.2) $
     scale 0.5 part
 
+-- | Probabilistic subdivision of a square
+quadtree :: Node ()
+quadtree = do
+  let p = 0.75
+      r' n = random (1-p) (return ()) n
+      d = 0.5
+      f = 3
+      squareR = do
+        square
+        -- 'p' chance of recursing in each quadrant:
+        r' $ shift' Fill [(Hue, 0.21), (Chrom, 1/f), (Lum, f)] $
+          scale 0.5 $ translate d d $ squareR
+        r' $ shift' Fill [(Hue, -0.19), (Chrom, f), (Lum, 1/f)] $
+          scale 0.5 $ translate d (-d) $ squareR
+        r' $ shift' Fill [(Hue, 0.09), (Chrom, 1/f), (Lum, 1/f)] $
+          scale 0.5 $ translate (-d) d $ squareR
+        r' $ shift' Fill [(Hue, -0.14), (Chrom, f), (Lum, f)] $
+          scale 0.5 $ translate (-d) (-d) $ squareR
+  background (0, 0, 0, 1)
+  scale 0.95 $ set Stroke (0, 0, 0, 1) $ set Fill (90, 20, -50, 1.0) $ squareR
+
+{-
 test :: Node ()
 test = do
   let d = 0.7
@@ -77,6 +99,7 @@ pattern dx dy angle = do
   scale 0.5 $ do
     square
     translate dx dy $ rotate angle $ shear 0.0 0.2 $ pattern dx dy angle
+-}
 
 -- | This is a render for the sake of checking bounds of backends; it
 -- contains a square which fills the entire canvas, and another one in
@@ -97,3 +120,4 @@ main = do
   DT.writeFile "testHSL_blaze_LAB.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testHSL
   DT.writeFile "testHSL2_blaze_LAB.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testHSL2
   DT.writeFile "testSquare_blaze_LAB.svg" $ BB.render (R.mkStdGen 12345) 1e-2 px py testSquare
+  DT.writeFile "quadtree_blaze_LAB.svg" $ BB.render (R.mkStdGen 12347) 1e-2 px py quadtree
