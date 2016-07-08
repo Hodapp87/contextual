@@ -57,8 +57,7 @@ throw off the aspect ratio - squares will be drawn as rectangles.
 primitives or average depth.
 * Stopping rendering on grammars that don't converge (e.g. limiting
 recursion depth or number of primitives)
-* Support for stroke thickness (maybe), and support for adjusting both
-stroke and fill color separately (right now it's only fill)
+* Support for stroke thickness (maybe)
 * Some optimization for the use of Cairo, e.g. if we are rendering a
 big scene to a raster image, then doing it in layers of N primitives
 may make sense to avoid building up huge scene graphs.
@@ -109,7 +108,6 @@ order to animate.
 
 ### General Tidiness/Refactoring
 
-* Use namespaces already!
 * Make a typeclass for rendering backends?
 * Factor out the use of `Context` for rendering, since much of this
 code seems to be repeated.  I'm not sure what form it will take, but
