@@ -17,33 +17,37 @@ Graphics.Rendering.Cairo.Render>.
 {-# LANGUAGE FlexibleContexts #-}
 
 module Graphics.Rendering.Contextual.Backend.Cairo
-  ( renderCairo
-  , preamble
-  , ColorRGBA(..)
-  )
+  (renderCairo, preamble)
 where
 
-import Graphics.Rendering.Contextual.Contextual hiding (scale)
-import Graphics.Rendering.Contextual.Utils
+import Graphics.Rendering.Contextual.Core hiding (scale)
+import Graphics.Rendering.Contextual.Colors
 
 import Control.Monad (when)
 import Control.Monad.Free
 import Control.Monad.State
 import qualified System.Random as R
 
+import qualified Data.Colour.CIE as CIE
+import qualified Data.Colour.CIE.Illuminant
 import qualified Data.Colour.SRGB as SRGB
-import qualified Data.Colour.RGBSpace.HSL as HSL
 import qualified Graphics.Rendering.Cairo as C 
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
--- | Wrapper around 'C.setSourceRGBA' for 'ColorRGBA' arguments
-setSourceRGBA' :: ColorRGBA -> C.Render ()
-setSourceRGBA' c = C.setSourceRGBA (colorR c) (colorG c) (colorB c) (colorA c)
+-- | Convert a LAB color to sRGB (given a whitepoint), and call
+-- 'C.setSourceRGBA' on it, passing alpha through directly.
+setSourceLAB :: CIE.Chromaticity Double -- ^ Whitepoint
+             -> LABColor Double -- ^ Color
+             -> C.Render ()
+setSourceLAB wp (l,a,b,alpha) = let rgb = SRGB.toSRGB $ CIE.cieLAB wp l a b
+  in C.setSourceRGBA (SRGB.channelRed rgb) (SRGB.channelGreen rgb)
+     (SRGB.channelBlue rgb) alpha
 
-renderCairo' :: (R.RandomGen a, Show b) => Double -- ^ Minimum scale
+renderCairo' :: (R.RandomGen a, Show b) => CIE.Chromaticity Double -- ^ Whitepoint
+             -> Double -- ^ Minimum scale
              -> Node b -- ^ Starting node
              -> StateT (Context a) C.Render ()
-renderCairo' minScale node = do
+renderCairo' wp minScale node = do
   ctxt <- get
   let -- Add some transformation, render the sub-node, and remove that
       -- transformation:
@@ -54,33 +58,32 @@ renderCairo' minScale node = do
         lift $ do C.save
                   xform
         -- Recurse (assuming our own context is correct):
-        renderCairo' minScale sub
+        renderCairo' wp minScale sub
         -- Restore the Cairo context:
         lift $ C.restore
-        -- Restore our context, but pass forward the RNG:
-        g <- ctxtRand <$> get
-        put $ ctxt { ctxtRand = g }
+        -- Restore our context, except for the RNG:
+        modify $ \c -> ctxt { ctxtRand = ctxtRand c }
       -- Likewise, but with no transformation:
       xformAndRestore_ sub = xformAndRestore sub $ return ()
   case node of
     -- N.B. Only proceed if global scale is large enough
-    (Free (Scale sx sy c' c)) -> when (ctxtScale ctxt > minScale) $ do
+    (Free (Scale sx sy c n)) -> when (ctxtScale ctxt > minScale) $ do
       put $ ctxt { ctxtScale = ctxtScale ctxt * min sx sy }
-      xformAndRestore c' $ C.scale sx sy
-      renderCairo' minScale c
-    (Free (Translate dx dy c' c)) -> do
-      xformAndRestore c' $ C.translate dx dy
-      renderCairo' minScale c
-    (Free (Rotate a c' c)) -> do
-      xformAndRestore c' $ C.rotate a
-      renderCairo' minScale c
-    (Free (Shear sx sy c' c)) -> do
-      xformAndRestore c' $ C.transform $ CM.Matrix 1.0 sx sy 1.0 0.0 0.0
-      renderCairo' minScale c
-    (Free (Square c)) -> do
+      xformAndRestore c $ C.scale sx sy
+      renderCairo' wp minScale n
+    (Free (Translate dx dy c n)) -> do
+      xformAndRestore c $ C.translate dx dy
+      renderCairo' wp minScale n
+    (Free (Rotate a c n)) -> do
+      xformAndRestore c $ C.rotate a
+      renderCairo' wp minScale n
+    (Free (Shear sx sy c n)) -> do
+      xformAndRestore c $ C.transform $ CM.Matrix 1.0 sx sy 1.0 0.0 0.0
+      renderCairo' wp minScale n
+    (Free (Square n)) -> do
       lift $ do
         C.rectangle (-0.5) (-0.5) 1 1
-        setSourceRGBA' $ ctxtFill ctxt
+        setSourceLAB wp $ ctxtFill ctxt
         C.fill
         -- TODO: All of the below is unnecessary if no stroke is
         -- desired.  Right now, the only way to specify that no stroke
@@ -88,10 +91,10 @@ renderCairo' minScale node = do
         -- still instruct Cairo to draw it anyway below.  A way to
         -- just disable stroke might be nice.
         C.rectangle (-0.5) (-0.5) 1 1
-        setSourceRGBA' $ ctxtStroke ctxt
+        setSourceLAB wp $ ctxtStroke ctxt
         C.stroke
-      renderCairo' minScale c
-    (Free (Triangle c)) -> do
+      renderCairo' wp minScale n
+    (Free (Triangle n)) -> do
       -- C.setLineWidth 5
       let h = 1.0 / sqrt(3.0)
           x n = h * cos (2 * n * pi / 3)
@@ -101,78 +104,36 @@ renderCairo' minScale node = do
         C.lineTo (x 1) (y 1)
         C.lineTo (x 2) (y 2)
         C.closePath
-        setSourceRGBA' $ ctxtFill ctxt
+        setSourceLAB wp $ ctxtFill ctxt
         C.fill
-        setSourceRGBA' $ ctxtStroke ctxt
+        setSourceLAB wp $ ctxtStroke ctxt
         C.stroke
-      renderCairo' minScale c
+      renderCairo' wp minScale n
     -- Note that we do not actually tell Cairo about colors until we
     -- actually need to draw something.  We *can* use C.setSourceRGBA
     -- anytime color changes in our own context, but there's no point.
-    (Free (Fill r g b a c' c)) -> do
-      let rgba = ctxtFill ctxt
-          rgba' = clampRGBA $ ColorRGBA { colorR = r
-                                        , colorG = g
-                                        , colorB = b
-                                        , colorA = a
-                                        }
-      -- TODO: This is nearly identical to ShiftRGBA.  I should
-      -- probably factor it out somehow.
-      put $ ctxt { ctxtFill = rgba' }
-      xformAndRestore_ c'
-      renderCairo' minScale c
-    (Free (Stroke r g b a c' c)) -> do
-      let rgba = ctxtStroke ctxt
-          rgba' = clampRGBA $ ColorRGBA { colorR = r
-                                        , colorG = g
-                                        , colorB = b
-                                        , colorA = a
-                                        }
-      put $ ctxt { ctxtStroke = rgba' }
-      xformAndRestore_ c'
-      renderCairo' minScale c
-    (Free (Random p c1 c2 c)) -> do
+    (Free (Set role color c n)) -> do
+      -- Render child nodes in a modified context:
+      put $ case role of Stroke -> ctxt { ctxtStroke = color }
+                         Fill   -> ctxt { ctxtFill = color }
+      xformAndRestore_ c
+      renderCairo' wp minScale n
+    (Free (Random p c1 c2 n)) -> do
       -- Get a random sample in [0,1]:
       let g = ctxtRand ctxt
           (sample, g') = R.random g
       put $ ctxt { ctxtRand = g' }
-      renderCairo' minScale (if sample < p then c1 else c2)
-      renderCairo' minScale c
-    (Free (ShiftRGBA r g b a c' c)) -> do
-      let rgba = ctxtFill ctxt
-          rgba' = clampRGBA $ ColorRGBA { colorR = colorR rgba * r
-                                        , colorG = colorG rgba * g
-                                        , colorB = colorB rgba * b
-                                        , colorA = colorA rgba * a
-                                        }
-      put $ ctxt { ctxtFill = rgba' }
-      xformAndRestore_ c'
-      renderCairo' minScale c
-    (Free (ShiftHSL dh sf lf af c' c)) -> do
-      let rgba = ctxtFill ctxt
-          -- Get HSL & transform:
-          (h,s,l) = HSL.hslView $
-            SRGB.RGB (colorR rgba) (colorG rgba) (colorB rgba)
-          (h', s', l') = (h + dh, clamp $ s * sf, clamp $ l * lf)
-          -- Get RGB, and transform alpha separately:
-          rgb' = HSL.hsl h' s' l'
-          rgba' = ColorRGBA { colorR = SRGB.channelRed   rgb'
-                            , colorG = SRGB.channelGreen rgb'
-                            , colorB = SRGB.channelBlue  rgb'
-                            , colorA = clamp $ colorA rgba * af
-                            }
-      put $ ctxt { ctxtFill = rgba' }
-      xformAndRestore_ c'
-      renderCairo' minScale c
-    (Free (Background r g b a c)) -> do
+      renderCairo' wp minScale (if sample < p then c1 else c2)
+      renderCairo' wp minScale n
+    (Free (Background color n)) -> do
       -- save & restore is probably overkill here, but this should
       -- only be done once.
       lift $ do
         C.save
-        C.setSourceRGBA r g b a
+        setSourceLAB wp color
         C.paint
         C.restore
-      renderCairo' minScale c
+      renderCairo' wp minScale n
     (Free t) -> error $ "Unsupported type in renderCairo, " ++ show t
     (Pure _) -> return ()
 
@@ -189,9 +150,9 @@ renderCairo :: (Show a, R.RandomGen r) => r -- ^ Random generator
             -> Node a -- ^ Scene to render
             -> C.Render ()
 renderCairo rg minScale px py node = do
-  let startCtxt = defaultContext rg
+  let wp = Data.Colour.CIE.Illuminant.d65
   preamble px py
-  execStateT (renderCairo' minScale node) startCtxt
+  execStateT (renderCairo' wp minScale node) $ defaultContext rg
   return ()
   -- TODO: Fix the types around here as they need not all be ()
 
