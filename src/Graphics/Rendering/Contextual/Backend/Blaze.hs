@@ -87,9 +87,8 @@ render' minScale node = do
       r' <- if (ctxtScale ctxt > minScale)
             then render' minScale c'
             else return mempty
-      -- Restore our context, but pass forward the RNG:
-      g <- ctxtRand <$> get
-      put $ ctxt { ctxtRand = g }
+      -- Restore our context, except for the RNG:
+      modify $ \c -> ctxt { ctxtRand = ctxtRand c }
       r <- render' minScale c
       return $ do
         S.g r' ! (A.transform $ S.scale sx sy)
@@ -135,32 +134,28 @@ render' minScale node = do
         r
     (Free (Set role color c n)) -> do
       -- Render child nodes in a modified context:
-      let ctxt' = case role of Stroke -> ctxt { ctxtStroke = color }
-                               Fill -> ctxt { ctxtFill = color }
-      put ctxt'
+      put $ case role of Stroke -> ctxt { ctxtStroke = color }
+                         Fill   -> ctxt { ctxtFill = color }
       rc <- render' minScale c
-      -- Restore our context, but pass forward the RNG:
-      g' <- ctxtRand <$> get
-      put $ ctxt { ctxtRand = g' }
+      -- Restore our context, except for the RNG:
+      modify $ \c -> ctxt { ctxtRand = ctxtRand c }
       rn <- render' minScale n
       return (svgColorGroup role color rc >> rn)
     (Free (Shift role view f c n)) -> do
-      -- Get existing color:
+      -- Get existing color and transform it:
       let color = case role of Stroke -> ctxtStroke ctxt
                                Fill -> ctxtFill ctxt
           color' = shiftColor view f color
-          ctxt' = case role of Stroke -> ctxt { ctxtStroke = color' }
-                               Fill -> ctxt { ctxtFill = color' }
       -- Render child nodes in a modified context:
-      put ctxt'
+      put $ case role of Stroke -> ctxt { ctxtStroke = color' }
+                         Fill   -> ctxt { ctxtFill = color' }
       rc <- render' minScale c
-      -- Restore our context, but pass forward the RNG:
-      g' <- ctxtRand <$> get
-      put $ ctxt { ctxtRand = g' }
+      -- Restore our context, except for the RNG:
+      modify $ \c -> ctxt { ctxtRand = ctxtRand c }
       rn <- render' minScale n
       return (svgColorGroup role color rc >> rn)
-        -- TODO: Most of above is identical with the 'Set' case; get
-        -- it put into one place
+        -- TODO: Most of above is identical with the 'Set' case; put
+        -- it in one place
     (Free (Background color@(_,_,_,alpha) c)) -> do
       r' <- render' minScale c
       return $ do
