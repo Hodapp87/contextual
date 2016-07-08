@@ -118,14 +118,14 @@ main = do
       py = 4000
 
   DT.writeFile "testHSL_blaze_LAB.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testHSL
-  {-C.withImageSurface C.FormatARGB32 px py $ \surf -> do
+  C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ CB.renderCairo (R.mkStdGen 12345) 1e-5 px py testHSL
-    C.surfaceWriteToPNG surf ("testHSL.png")-}
+    C.surfaceWriteToPNG surf ("testHSL_LAB.png")
   
   DT.writeFile "testHSL2_blaze_LAB.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testHSL2
   DT.writeFile "testSquare_blaze_LAB.svg" $ BB.render (R.mkStdGen 12345) 1e-2 px py testSquare
   
   DT.writeFile "quadtree_blaze_LAB.svg" $ BB.render (R.mkStdGen 12347) 1e-2 px py quadtree
-  {-C.withImageSurface C.FormatARGB32 px py $ \surf -> do
+  C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ CB.renderCairo (R.mkStdGen 12347) 1e-2 px py quadtree
-    C.surfaceWriteToPNG surf ("quadtree_LAB.png")-}
+    C.surfaceWriteToPNG surf ("quadtree_LAB.png")

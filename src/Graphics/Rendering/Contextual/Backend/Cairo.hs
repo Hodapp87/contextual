@@ -118,12 +118,24 @@ renderCairo' wp minScale node = do
                          Fill   -> ctxt { ctxtFill = color }
       xformAndRestore_ c
       renderCairo' wp minScale n
+    (Free (Shift role view f c n)) -> do
+      -- Get existing color and transform it:
+      let color = case role of Stroke -> ctxtStroke ctxt
+                               Fill -> ctxtFill ctxt
+          color' = shiftColor view f color
+      -- Render child nodes in a modified context:
+      put $ case role of Stroke -> ctxt { ctxtStroke = color' }
+                         Fill   -> ctxt { ctxtFill = color' }
+      xformAndRestore_ c
+      renderCairo' wp minScale n
+      -- TODO: Most of above is identical with the 'Set' case; put it
+      -- in one place
     (Free (Random p c1 c2 n)) -> do
       -- Get a random sample in [0,1]:
       let g = ctxtRand ctxt
           (sample, g') = R.random g
       put $ ctxt { ctxtRand = g' }
-      renderCairo' wp minScale (if sample < p then c1 else c2)
+      renderCairo' wp minScale $ if sample < p then c1 else c2
       renderCairo' wp minScale n
     (Free (Background color n)) -> do
       -- save & restore is probably overkill here, but this should

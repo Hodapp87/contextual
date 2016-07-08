@@ -122,13 +122,13 @@ render' minScale node = do
       return $ do
         S.polygon ! (A.points $ S.toValue ptStr)
         r
-    (Free (Random p c1 c2 c)) -> do
+    (Free (Random p c1 c2 n)) -> do
       -- Get a random sample in [0,1]:
       let g = ctxtRand ctxt
           (sample, g') = R.random g
       put $ ctxt { ctxtRand = g' }
       r' <- render' minScale (if sample < p then c1 else c2)
-      r <- render' minScale c
+      r <- render' minScale n
       return $ do
         r'
         r
