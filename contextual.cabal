@@ -20,6 +20,7 @@ executable contextual
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   other-modules:       Contextual
                      , BlazeBackend
+                     , Utils
                      -- Disabled for LAB overhaul:
                      --, CairoBackend
   -- Below is needed only for blaze-svg:

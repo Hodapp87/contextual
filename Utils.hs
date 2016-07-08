@@ -66,12 +66,12 @@ shiftColor LAB_a f (l, a, b, alpha) = (l, a + f, b, alpha)
 shiftColor LAB_b f (l, a, b, alpha) = (l, a, b + f, alpha)
 -- I'm not sure if additive is the proper way to treat these.
 
--- absColor = CIE.cieLAB wp l a b
-  
 -- | Convert a 'LABColor', ignoring transparency, to an SVG color.
 -- This will be of a format like @#CD853F cielab(62.253188, 23.950124,
 -- 48.410653)@, which includes both the CIELAB color value and an sRGB
 -- fallback (for which D65 whitepoint is assumed).
+--
+-- See <https://www.w3.org/TR/SVGColor12/#LAB>.
 svgColor ::
   (PrintfArg a, Ord a, Floating a, RealFrac a) => LABColor a -> String
 svgColor labColor = printf "%s cielab(%f, %f, %f)" rgbStr l a b

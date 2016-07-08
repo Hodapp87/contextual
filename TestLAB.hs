@@ -40,7 +40,7 @@ testHSL = do
           translate 0.5 (-0.15) $
           scale 0.9 r
   background (0, 0, 0, 1)
-  set Fill (50, 0, -200, 0.3) $
+  set Fill (50, 0, -100, 0.3) $
     translate (-0.25) (-0.25) $
     scale 0.35 r
 
@@ -49,15 +49,15 @@ testHSL2 = do
   let part = do
         square
         shift Fill Hue 0.1 $
-          shift Fill Chrom (-2) $
+          shift Fill Chrom 3 $
           shift Fill Lum (-2) $
-          shift Fill Alpha 0.07 $
+          --shift Fill Alpha 0.07 $
           rotate (pi/7) $
           translate 0.4 (-0.05) $
           scale2 0.9 0.7 part
   background (98, 0, 0, 1)
   set Stroke (0, 0, 0, 1) $
-    set Fill (100, 200, 0, 0.2) $
+    set Fill (70, 80, 40, 0.3) $
     translate (-0.2) (-0.2) $
     scale 0.5 part
 

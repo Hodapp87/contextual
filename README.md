@@ -59,14 +59,6 @@ primitives or average depth.
 recursion depth or number of primitives)
 * Support for stroke thickness (maybe), and support for adjusting both
 stroke and fill color separately (right now it's only fill)
-* Better colorspace than "plain" RGB.
-[colour](https://hackage.haskell.org/package/colour) can probably help
-here.  Alongside this: A saner way of specifying colors.  (Note that
-while SVG supports
-[ICC profiles](https://www.w3.org/TR/SVGColor12/#icc-colors) and LAB,
-the documentation on colour specifically calls out Cairo integration
-as being problematic because its colors are in a device-dependent
-color space.)
 * Some optimization for the use of Cairo, e.g. if we are rendering a
 big scene to a raster image, then doing it in layers of N primitives
 may make sense to avoid building up huge scene graphs.
@@ -90,6 +82,9 @@ that
 [ihaskell-charts](https://hackage.haskell.org/package/ihaskell-charts)
 uses, which looks like it ties in with
 [Chart-cairo](https://hackage.haskell.org/package/Chart-cairo).
+* *PDF:* While Cairo can do this, I'd like properly color-managed
+PDFs, and I don't think its PDF export will properly do this (as with
+SVG).
 * [Years ago](https://hodapple.com/blag/posts/2011-08-29-context-free.html),
 I wrote, *"Translating something written in Context Free into another
 programming language would in most cases not be difficult at all - you
