@@ -1,5 +1,5 @@
 {-|
-Module      : TestLAB
+Module      : Test
 Description : Test renders for Contextual
 Copyright   : (c) Chris Hodapp, 2016
 License     : ?
@@ -9,8 +9,6 @@ Portability : POSIX
 
 So far, this is a lot of scratch code for test renders that I have
 done for Contextual.
-
-This is a scratch file for testing LAB support.
 
 -}
 
@@ -83,7 +81,6 @@ quadtree = do
   background (0, 0, 0, 1)
   scale 0.95 $ set Stroke (0, 0, 0, 0.5) $ set Fill (90, 20, -50, 1.0) $ squareR
 
-{-
 test :: Node ()
 test = do
   let d = 0.7
@@ -99,7 +96,45 @@ pattern dx dy angle = do
   scale 0.5 $ do
     square
     translate dx dy $ rotate angle $ shear 0.0 0.2 $ pattern dx dy angle
--}
+
+stroke = undefined
+fill = undefined
+shiftRGBA = undefined
+
+-- Not exactly Sierpinski, but an incorrect attempt that looks neat still
+notSierpinski :: Node ()
+notSierpinski = do
+  let xform s = translate (5/6) 0 $ scale (1/3) $ rotate pi s
+      pi3 = pi/3
+      rep6 = do triangle
+                xform rep6
+                rotate (1*pi3) $ xform rep6
+                rotate (2*pi3) $ xform rep6
+                rotate (3*pi3) $ xform rep6
+                rotate (4*pi3) $ xform rep6
+                rotate (5*pi3) $ xform rep6
+  --background 0.0 0.0 0.0 1.0
+  stroke 0.5 0 0.5 1.0 $ fill 0.4 1.0 0.4 0.8 $ scale 0.5 rep6
+  -- TODO: Figure out why the above strokes show up in Blaze backend
+  -- but not Cairo
+
+-- Not exactly Sierpinski, but an attempt at it
+sierpinski :: Node ()
+sierpinski = do
+  let xform s = translate (1/3) 0 $ scale (1/3) $ rotate pi s
+      pi3 = pi/3
+      -- I didn't realize until now that Cairo's triangles were the
+      -- wrong size, and I designed this around its coordinates:
+      fudge = scale $ sqrt (3/4)
+      rep6 = do fudge triangle
+                xform rep6
+                rotate (1*pi3) $ xform rep6
+                rotate (2*pi3) $ xform rep6
+                rotate (3*pi3) $ xform rep6
+                rotate (4*pi3) $ xform rep6
+                rotate (5*pi3) $ xform rep6
+  --background 0.0 0.0 0.0 1.0
+  shiftRGBA 0.8 1.4 3.0 1.3 $ stroke 0 0 0 0 $ fill 1.0 0.3 0.3 0.2 $ rep6
 
 -- | This is a render for the sake of checking bounds of backends; it
 -- contains a square which fills the entire canvas, and another one in
