@@ -68,14 +68,16 @@ random seed.  Is there a way around this?
 
 ### Other Backends
 
-* *Web:* Some magic with [ghcjs](https://github.com/ghcjs/ghcjs) (looks like
-[stack](http://docs.haskellstack.org/en/stable/ghcjs/) supports it) to
-allow this to run in, and render in, the browser
-([Canvas](https://github.com/ghcjs/ghcjs-base/tree/master/JavaScript/Web/Canvas)?
+* *Web:* Some magic with [ghcjs](https://github.com/ghcjs/ghcjs)
+(looks like [stack](http://docs.haskellstack.org/en/stable/ghcjs/)
+supports it) to allow this to run in, and render in, the browser
+([Canvas](https://github.com/ghcjs/ghcjs-base/tree/master/JavaScript/Web/Canvas)
+as in [diagrams-canvas](https://github.com/diagrams/diagrams-canvas)?
 SVG? WebGL?)
 * *GL:* OpenGL/WebGL rendering should be possible with the current
 primitives.  Perhaps start at
-[Beautiful Code](http://www.renci.org/wp-content/pub/tutorials/BeautifulCode.pdf).
+[Beautiful Code](http://www.renci.org/wp-content/pub/tutorials/BeautifulCode.pdf)
+or [Gloss](https://hackage.haskell.org/package/gloss).
 * *IHaskell:* Integration with [IHaskell](https://github.com/gibiansky/IHaskell)
 and [Jupyter](http://jupyter.org/).  Perhaps I can use the mechanism
 that
@@ -84,7 +86,9 @@ uses, which looks like it ties in with
 [Chart-cairo](https://hackage.haskell.org/package/Chart-cairo).
 * *PDF:* While Cairo can do this, I'd like properly color-managed
 PDFs, and I don't think its PDF export will properly do this (as with
-SVG).
+SVG).  PostScript is another option - see how
+[diagrams-postscript](https://github.com/diagrams/diagrams-postscript)
+does it perhaps.
 * [Years ago](https://hodapple.com/blag/posts/2011-08-29-context-free.html),
 I wrote, *"Translating something written in Context Free into another
 programming language would in most cases not be difficult at all - you
@@ -101,6 +105,7 @@ starting places - or [Fay](https://github.com/faylang/fay) or
 JavaScript.  However, this may not have much point without something
 else to parametrize it over, e.g. a random seed or a time value in
 order to animate.
+* [Rasterific](https://github.com/Twinside/Rasterific)?
 
 ### General Tidiness/Refactoring
 

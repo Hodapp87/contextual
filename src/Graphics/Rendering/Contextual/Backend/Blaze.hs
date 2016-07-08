@@ -1,5 +1,5 @@
 {-|
-Module      : BlazeBackend
+Module      : Blaze
 Description : Blaze (particularly blaze-svg) backend for Contextual
 Copyright   : (c) Chris Hodapp, 2016
 License     : ?
@@ -31,10 +31,10 @@ transparent, and actually setting the stroke works.
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module BlazeBackend where
+module Graphics.Rendering.Contextual.Backend.Blaze where
 
-import Contextual hiding (scale)
-import Utils
+import Graphics.Rendering.Contextual.Core hiding (scale)
+import Graphics.Rendering.Contextual.Colors
 
 import Control.Monad.Free
 import Control.Monad.State

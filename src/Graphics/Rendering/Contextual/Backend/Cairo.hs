@@ -1,5 +1,5 @@
 {-|
-Module      : CairoBackend
+Module      : Cairo
 Description : Cairo backend for Contextual
 Copyright   : (c) Chris Hodapp, 2016
 License     : ?
@@ -16,9 +16,15 @@ Graphics.Rendering.Cairo.Render>.
 
 {-# LANGUAGE FlexibleContexts #-}
 
-module CairoBackend (renderCairo, preamble, ColorRGBA(..)) where
+module Graphics.Rendering.Contextual.Backend.Cairo
+  ( renderCairo
+  , preamble
+  , ColorRGBA(..)
+  )
+where
 
-import Contextual
+import Graphics.Rendering.Contextual.Contextual hiding (scale)
+import Graphics.Rendering.Contextual.Utils
 
 import Control.Monad (when)
 import Control.Monad.Free

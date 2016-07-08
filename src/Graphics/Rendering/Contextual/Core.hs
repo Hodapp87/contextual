@@ -1,6 +1,6 @@
 {-|
-Module      : Contextual
-Description : Main module for Contextual
+Module      : Core
+Description : Core module for Contextual
 Copyright   : (c) Chris Hodapp, 2016
 License     : ?
 Maintainer  : Hodapp87@gmail.com
@@ -24,9 +24,9 @@ contextual_clojure> for a Clojure one.
 
 {-# LANGUAGE DeriveFunctor #-}
 
-module Contextual where
+module Graphics.Rendering.Contextual.Core where
 
-import Utils
+import Graphics.Rendering.Contextual.Colors
 
 import Control.Monad.Free
 import qualified Data.Colour.CIE as CIE

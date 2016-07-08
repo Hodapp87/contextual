@@ -18,9 +18,10 @@ import Control.Monad (forM_)
 
 import qualified Data.Text.Lazy.IO as DT
 
-import Contextual
-import qualified CairoBackend as CB
-import qualified BlazeBackend as BB
+import Graphics.Rendering.Contextual.Core
+--import qualified Graphics.Rendering.Contextual.Backend.Cairo as CB
+import qualified Graphics.Rendering.Contextual.Backend.Blaze as BB
+
 import qualified Graphics.Rendering.Cairo as C 
 
 import qualified System.Random as R

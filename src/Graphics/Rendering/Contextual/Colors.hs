@@ -1,6 +1,6 @@
 {-|
-Module      : Utils
-Description : 
+Module      : Colors
+Description : Color operations used throughout Contextual and its backends
 Copyright   : (c) Chris Hodapp, 2016
 License     : ?
 Maintainer  : Hodapp87@gmail.com
@@ -10,7 +10,7 @@ Portability : POSIX
 
 -}
 
-module Utils where
+module Graphics.Rendering.Contextual.Colors where
 
 import Text.Printf (printf, PrintfArg)
 
