@@ -12,6 +12,9 @@ particularly, the type
 <https://hackage.haskell.org/package/cairo-0.12.3/docs/Graphics-Rendering-Cairo.html
 Graphics.Rendering.Cairo.Render>.
 
+Due to how Cairo handles color, the colors in this backend may not
+line up exactly with other backends.
+
 -}
 
 {-# LANGUAGE FlexibleContexts #-}
