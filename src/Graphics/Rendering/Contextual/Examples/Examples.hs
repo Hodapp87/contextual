@@ -30,16 +30,26 @@ import qualified System.Random as R
 testHSL :: Node ()
 testHSL = do
   let r = do
+        -- For each 'r', draw a square...
         square
+        -- Then shift hue, decrease chroma, increase luminance, and
+        -- make less transparent:
         shift Fill Hue (-0.3) $
           shift Fill Chrom (-6) $
           shift Fill Lum 5 $
           shift Fill Alpha 0.07 $
+          -- Then scale down to 90%, move a bit to the right and
+          -- slightly up, rotate pi/8 radians - and repeat 'r' again.
           rotate (pi/8) $
           translate 0.5 (-0.15) $
           scale 0.9 r
+  -- Start with a fully black background:
   background (0, 0, 0, 1)
+  -- Start with a fill color that's about 50% luminance, @b*=-100@
+  -- (fully-saturated blue-ish), and 30% opacity:
   set Fill (50, 0, -100, 0.3) $
+    -- Begin with @r@, scaled down to 35%, and shifted towards the
+    -- top-left corner a bit.
     translate (-0.25) (-0.25) $
     scale 0.35 r
 
