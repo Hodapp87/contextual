@@ -120,8 +120,18 @@ render' minScale node = do
       -- Get a random sample in [0,1]:
       let g = ctxtRand ctxt
           (sample, g') = R.random g
-      put $ ctxt { ctxtRand = g' }
+          -- We also split the random number generator because of the
+          -- possibility that we recurse here.  That recursion may
+          -- occur to different depths depending on what minimum size
+          -- is requested - but we do not want deeper recursion in one
+          -- spot to completely change the random values in another.
+          -- (In other words: If the only change in the input is in
+          -- the recursion depth, then the only change in the output
+          -- should be in the deeper-nested parts.)
+          (g1, g2) = R.split g'
+      put $ ctxt { ctxtRand = g1 }
       r' <- render' minScale (if sample < p then c1 else c2)
+      put $ ctxt { ctxtRand = g2 }
       r <- render' minScale n
       return $ do
         r'

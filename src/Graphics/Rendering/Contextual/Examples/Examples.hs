@@ -162,7 +162,9 @@ main = do
   let px = 4000
       py = 4000
 
-  DT.writeFile "testHSL_blaze_LAB.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testHSL
+  DT.writeFile "testHSL_blaze_LAB.svg" $
+    BB.render (R.mkStdGen 12345) 1e-5 px py testHSL
+    
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ CB.renderCairo (R.mkStdGen 12345) 1e-5 px py testHSL
     C.surfaceWriteToPNG surf ("testHSL_LAB.png")
@@ -170,7 +172,15 @@ main = do
   DT.writeFile "testHSL2_blaze_LAB.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testHSL2
   DT.writeFile "testSquare_blaze_LAB.svg" $ BB.render (R.mkStdGen 12345) 1e-2 px py testSquare
   
-  DT.writeFile "quadtree_blaze_LAB.svg" $ BB.render (R.mkStdGen 12347) 1e-2 px py quadtree
+  -- These two should look identical, except for in the tinier
+  -- details.  That is, one should just be a 'more resolved' version
+  -- of the other.
+  DT.writeFile "quadtree_blaze_LAB.svg" $
+    BB.render (R.mkStdGen 12347) 1e-2 px py quadtree
+  DT.writeFile "quadtree_blaze_LAB_low.svg" $
+    BB.render (R.mkStdGen 12347) 3e-2 px py quadtree
+  -- This is the Cairo version, which may not match exactly thanks to
+  -- differing colorspaces:
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ CB.renderCairo (R.mkStdGen 12347) 1e-2 px py quadtree
     C.surfaceWriteToPNG surf ("quadtree_LAB.png")

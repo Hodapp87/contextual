@@ -66,6 +66,7 @@ This prevents one from doing a more detailed render based on the same
 random seed.  Is there a way around this?
 ([System.Random.split](https://hackage.haskell.org/package/random/docs/System-Random.html#v:split)
 might be this.)
+    * Done for blaze backend, but not yet for Cairo
 
 ### Other Backends
 
