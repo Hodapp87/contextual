@@ -178,7 +178,7 @@ main = do
   DT.writeFile "quadtree_blaze_LAB.svg" $
     BB.render (R.mkStdGen 12347) 1e-2 px py quadtree
   DT.writeFile "quadtree_blaze_LAB_low.svg" $
-    BB.render (R.mkStdGen 12347) 3e-2 px py quadtree
+    BB.render (R.mkStdGen 12347) 2e-2 px py quadtree
   -- This is the Cairo version, which may not match exactly thanks to
   -- differing colorspaces:
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
