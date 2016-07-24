@@ -61,12 +61,6 @@ recursion depth or number of primitives)
 * Some optimization for the use of Cairo, e.g. if we are rendering a
 big scene to a raster image, then doing it in layers of N primitives
 may make sense to avoid building up huge scene graphs.
-* Randomness is deterministic - but contingent on recursion depth.
-This prevents one from doing a more detailed render based on the same
-random seed.  Is there a way around this?
-([System.Random.split](https://hackage.haskell.org/package/random/docs/System-Random.html#v:split)
-might be this.)
-    * Done for blaze backend, but not yet for Cairo
 
 ### Other Backends
 

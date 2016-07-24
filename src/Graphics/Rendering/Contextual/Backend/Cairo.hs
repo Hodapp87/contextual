@@ -137,8 +137,13 @@ renderCairo' wp minScale node = do
       -- Get a random sample in [0,1]:
       let g = ctxtRand ctxt
           (sample, g') = R.random g
-      put $ ctxt { ctxtRand = g' }
+          -- See Graphics.Rendering.Contextual.Backend.Cairo.Blaze,
+          -- particularly the same Random case in the pattern match,
+          -- for the explanation of this:
+          (g1, g2) = R.split g'
+      put $ ctxt { ctxtRand = g1 }
       renderCairo' wp minScale $ if sample < p then c1 else c2
+      put $ ctxt { ctxtRand = g2 }
       renderCairo' wp minScale n
     (Free (Background color n)) -> do
       -- save & restore is probably overkill here, but this should

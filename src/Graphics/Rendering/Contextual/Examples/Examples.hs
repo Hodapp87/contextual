@@ -184,3 +184,6 @@ main = do
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ CB.renderCairo (R.mkStdGen 12347) 1e-2 px py quadtree
     C.surfaceWriteToPNG surf ("quadtree_LAB.png")
+  C.withImageSurface C.FormatARGB32 px py $ \surf -> do
+    C.renderWith surf $ CB.renderCairo (R.mkStdGen 12347) 2e-2 px py quadtree
+    C.surfaceWriteToPNG surf ("quadtree_LAB_low.png")
