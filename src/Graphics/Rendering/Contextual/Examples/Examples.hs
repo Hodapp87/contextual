@@ -91,6 +91,35 @@ quadtree = do
   background (0, 0, 0, 1)
   scale 0.95 $ set Stroke (0, 0, 0, 0.5) $ set Fill (90, 20, -50, 1.0) $ squareR
 
+-- | Probabilistic subdivision of a square, with another step
+quadtree45 :: Node ()
+quadtree45 = do
+  let p = 0.75
+      r' n = random (1-p) (return ()) n
+      d = 0.5
+      f = 3
+      p_ang = 0.3
+      ang = pi/7
+      s_ang = 1 / (cos ang + sin ang)
+      squareR = do
+        square
+        -- 'p45' chance of a 45-degree rotation with corners touching
+        -- sides:
+        random p_ang
+          (shift Fill Hue (-2) $ scale s_ang $ rotate ang squareR)
+          $ do
+          -- 'p' chance of recursing in each quadrant:
+          r' $ shift' Fill [(Hue, 0.21), (Chrom, 1/f), (Lum, f)] $
+            scale 0.5 $ translate d d $ squareR
+          r' $ shift' Fill [(Hue, -0.19), (Chrom, f), (Lum, 1/f)] $
+            scale 0.5 $ translate d (-d) $ squareR
+          r' $ shift' Fill [(Hue, 0.09), (Chrom, 1/f), (Lum, 1/f)] $
+            scale 0.5 $ translate (-d) d $ squareR
+          r' $ shift' Fill [(Hue, -0.14), (Chrom, f), (Lum, f)] $
+            scale 0.5 $ translate (-d) (-d) $ squareR
+  background (0, 0, 0, 1)
+  scale 0.95 $ set Stroke (0, 0, 0, 0.5) $ set Fill (90, 20, -50, 1.0) $ squareR
+
 test :: Node ()
 test = do
   let d = 0.7
@@ -187,3 +216,5 @@ main = do
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ CB.renderCairo (R.mkStdGen 12347) 2e-2 px py quadtree
     C.surfaceWriteToPNG surf ("quadtree_LAB_low.png")
+  DT.writeFile "quadtree45_blaze_LAB.svg" $
+    BB.render (R.mkStdGen 12347) 1e-2 px py quadtree45

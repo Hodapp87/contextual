@@ -58,6 +58,9 @@ primitives or average depth.
 * Stopping rendering on grammars that don't converge (e.g. limiting
 recursion depth or number of primitives)
 * Support for stroke thickness (maybe)
+* Support for text may make for some neat possibilities.  It will
+however probably be difficult to get this consistent across multiple
+output backends.
 * Some optimization for the use of Cairo, e.g. if we are rendering a
 big scene to a raster image, then doing it in layers of N primitives
 may make sense to avoid building up huge scene graphs.
@@ -102,6 +105,7 @@ JavaScript.  However, this may not have much point without something
 else to parametrize it over, e.g. a random seed or a time value in
 order to animate.
 * [Rasterific](https://github.com/Twinside/Rasterific)?
+* ASCII art backend!
 
 ### General Tidiness/Refactoring
 
@@ -131,3 +135,6 @@ implicitly?  Should I be using it explicitly?
 * Extend support to 3D (same idea as in
 [Structure Synth](http://blog.hvidtfeldts.net/index.php/category/structure-synth/)
 from the amazing Syntopia blog).
+* A way of generating diagrams which explain, one level at a time, the
+operations of a grammar, might be very helpful and might be doable,
+but probably difficult.
