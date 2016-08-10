@@ -116,6 +116,11 @@ render' minScale node = do
       return $ do
         S.polygon ! (A.points $ S.toValue ptStr)
         r
+    (Free (Line c)) -> do
+      r <- render' minScale c
+      return $ do
+        S.line ! A.x1 "-0.5" ! A.y1 "0" ! A.x2 "0.5" ! A.y2 "0"
+        r
     (Free (Random p c1 c2 n)) -> do
       -- Get a random sample in [0,1]:
       let g = ctxtRand ctxt

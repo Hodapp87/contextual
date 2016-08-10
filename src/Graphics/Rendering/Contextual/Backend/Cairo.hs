@@ -112,6 +112,14 @@ renderCairo' wp minScale node = do
         setSourceLAB wp $ ctxtStroke ctxt
         C.stroke
       renderCairo' wp minScale n
+    (Free (Line n)) -> do
+      -- C.setLineWidth 5
+      lift $ do
+        C.moveTo (-0.5) 0
+        C.lineTo 0.5 0
+        setSourceLAB wp $ ctxtStroke ctxt
+        C.stroke
+      renderCairo' wp minScale n
     -- Note that we do not actually tell Cairo about colors until we
     -- actually need to draw something.  We *can* use C.setSourceRGBA
     -- anytime color changes in our own context, but there's no point.

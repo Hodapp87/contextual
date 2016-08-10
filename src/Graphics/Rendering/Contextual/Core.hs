@@ -70,7 +70,8 @@ square = liftF $ Square ()
 triangle :: Node ()
 triangle = liftF $ Triangle ()
 
--- | Not implemented!
+-- | Origin-centered line of length 1 along @x@ - that is, vertices at
+-- (0.5, 0), (-0.5, 0).
 line :: Node ()
 line = liftF $ Line ()
 

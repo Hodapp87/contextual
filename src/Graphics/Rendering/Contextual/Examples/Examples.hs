@@ -157,6 +157,18 @@ testSquare = do
   scale 0.95 $ set Fill (100, 0, 0, 0.5) square
   set Fill (100, 0, 0, 0.5) triangle
 
+-- | Test out the line primitive
+testLines :: Node ()
+testLines = do
+  let r = do
+        line
+        scale 0.5 $ translate 1 0 $ do
+          rotate (pi/6) $ r
+          rotate (-pi/6) $ r
+  background (100, 0, 0, 1)
+  set Stroke (0, 0, 0, 1.0) $ scale 0.5 $ do
+    mapM_ (\ang -> rotate ang r) [0, pi/2, pi, 3*pi/2]
+
 main :: IO ()
 main = do
   let px = 4000
@@ -168,6 +180,13 @@ main = do
   C.withImageSurface C.FormatARGB32 px py $ \surf -> do
     C.renderWith surf $ CB.renderCairo (R.mkStdGen 12345) 1e-5 px py testHSL
     C.surfaceWriteToPNG surf ("testHSL_LAB.png")
+
+  DT.writeFile "testLines_blaze.svg" $
+    BB.render (R.mkStdGen 12345) 1e-3 px py testLines
+    
+  C.withImageSurface C.FormatARGB32 px py $ \surf -> do
+    C.renderWith surf $ CB.renderCairo (R.mkStdGen 12345) 1e-3 px py testLines
+    C.surfaceWriteToPNG surf ("testLines_cairo.png")
   
   DT.writeFile "testHSL2_blaze_LAB.svg" $ BB.render (R.mkStdGen 12345) 1e-5 px py testHSL2
   DT.writeFile "testSquare_blaze_LAB.svg" $ BB.render (R.mkStdGen 12345) 1e-2 px py testSquare
