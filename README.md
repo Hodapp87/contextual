@@ -47,12 +47,13 @@ These are all generated from `Test.hs`.
 
 * Explain here how exactly Contextual works and how one might use it!
 * Explain the examples!
+* Explain better how the order in transformation goes.
 
 ### Core
 
 * A way to specify canvas size.  Right now, non-square images will
 throw off the aspect ratio - squares will be drawn as rectangles.
-* Support for other primitives: circle, line, arc
+* Support for other primitives: circle, arc
 * Some diagnostic information in `Context` such as the number of
 primitives or average depth.
 * Stopping rendering on grammars that don't converge (e.g. limiting
